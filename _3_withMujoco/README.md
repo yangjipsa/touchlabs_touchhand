@@ -45,4 +45,22 @@ pip install mink loop-rate-limiters quadprog     # STEP 2(IK) 전용
 - `hand_driver.py`의 `MAX_TORQUE_PCT`(기본 55) = 서보 최대 토크 제한(자동 적용)
 - `grip_config.py`의 `CLOSE_TARGET` = 닫기 목표(낮출수록 약하게)
 
+## 모양 인식 모델 2종 (골라 쓰기)
+
+| 파일 | 무엇 | 언제 |
+|---|---|---|
+| **`shape_model.pkl`** (기본) | **시뮬 학습본** — MuJoCo 물리 + 도메인 랜덤화, 도형당 500표본 | 기본값. 손 개체차에 강건해 **누구 손이든** 무난 |
+| **`shape_model_보정_실물.pkl`** | **실물 보정본** — `day2_보정_shape_teach_real` 로 실제 손에서 학습 | **이 키트의 그 손**에서 더 정확. 시뮬본이 실물에서 자꾸 틀릴 때 |
+
+**실물 보정본으로 바꾸기**
+```bash
+cp shape_model.pkl shape_model_시뮬.pkl        # 원본 백업(한 번만)
+cp shape_model_보정_실물.pkl shape_model.pkl   # 교체 → day2_6 이 이걸 씀
+```
+되돌리려면 `cp shape_model_시뮬.pkl shape_model.pkl`.
+
+> ⚠️ **보정본은 `grip_cal.json`(빈손 기준 FREECLOSE·힘 CLOSE_TARGET)과 한 세트**입니다.
+> 손을 다시 캘리브(`day2_3`에서 `k`)하면 기준이 바뀌므로 **보정본도 다시 학습**하세요.
+> 직접 만들려면: `day2_3`에서 `k` 캘리브 → `python day2_보정_shape_teach_real.py` → 도형당 5번 `c` → `t` → `s`
+
 > `_archive/` = 수업에 안 쓰는 실험용 파일 보관(무시해도 됨).
