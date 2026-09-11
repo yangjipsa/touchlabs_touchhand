@@ -1,0 +1,7 @@
+# 서보 세팅 도구(hand_setup.py 등) 실행에 필요한 최소 패키지
+feetech-servo-sdk      # scservo_sdk 모듈 제공 (★ 이게 있어야 동작)
+pyserial
+
+# (선택) GUI 앱 main.py 를 직접 빌드/실행할 때만:
+# PyQt6
+# pyinstaller

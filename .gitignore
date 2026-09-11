@@ -1,0 +1,24 @@
+# ── 보안: 실제 API 키는 절대 저장소에 올리지 않음 (각자 로컬에 생성) ──
+api_key.txt
+*.key
+.env
+
+# ── Python ──
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+
+# ── macOS / 에디터 ──
+.DS_Store
+.vscode/
+.idea/
+
+# ── Edge Impulse 라이브러리 (용량 큼, 학습 후 각자 생성·설치) ──
+*_inferencing/
+*_inferencing.zip
+
+# ── 빌드 산출물 ──
+build/
+dist/
