@@ -167,26 +167,30 @@ threading.Thread(target=reader, daemon=True).start()
 cur = [0.0] * 8
 GREEN = [0.2, 0.8, 0.3, 0.35]
 RED   = [1.0, 0.15, 0.1, 0.9]
+from shape_common import Pacer, frame_camera      # ★ 저사양/윈도우: 렌더와 물리 분리 + 카메라 프레이밍
+pacer = Pacer(model.opt.timestep)
 with mujoco.viewer.launch_passive(model, data) as viewer:
+    frame_camera(viewer)
     while viewer.is_running() and state["run"]:
         # 시뮬을 '실제(read) 위치'로  (실물의 지금 모습을 비춤)
         flex4 = [state["actual"][a] / 250.0 for a in [0, 1, 2, 3]]  # 실물bend → 시뮬라디안
         tgt = pose_to_ctrl(flex4)
-        for k in range(8):
-            diff = tgt[k] - cur[k]
-            cur[k] += SPEED_STEP if diff > SPEED_STEP else (-SPEED_STEP if diff < -SPEED_STEP else diff)
-            data.ctrl[k] = cur[k]
+        for _ in range(pacer.substeps()):         # 렌더가 느려도 물리는 실시간에 맞춰 여러 스텝
+            for k in range(8):
+                diff = tgt[k] - cur[k]
+                cur[k] += SPEED_STEP if diff > SPEED_STEP else (-SPEED_STEP if diff < -SPEED_STEP else diff)
+                data.ctrl[k] = cur[k]
+            mujoco.mj_step(model, data)
         # 잡은 손가락 구슬 빨갛게
         for sf in range(4):
             g = GEOM[sf]
             if g >= 0:
                 anat = SIMFINGER_TO_ANAT[sf]
                 model.geom_rgba[g] = RED if state["grip"][anat] else GREEN
-        mujoco.mj_step(model, data)
         for i in range(4):                       # 구슬을 손끝 위치로 (따라다니게)
             data.mocap_pos[MOCAPID[i]] = data.site_xpos[TIPSITE[i]]
         viewer.sync()
-        time.sleep(0.004)
+        time.sleep(0.002)
 
 state["run"] = False
 time.sleep(0.2)

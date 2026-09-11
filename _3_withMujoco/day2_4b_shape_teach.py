@@ -12,13 +12,14 @@
 #   ※ 숫자키/Space 등은 MuJoCo 뷰어 자체 기능이라 피했음
 #
 #  준비 : pip install mujoco scikit-learn numpy
-#  실행(★맥):  mjpython day2_4b_shape_teach.py
+#  실행(★맥):  mjpython day2_4b_shape_teach.py      (윈도우: python day2_4b_shape_teach.py)
+#  v2: 빈손 기준(막힌 비율) 특징 · Pacer(저사양/윈도우) · 카메라 자동 프레이밍
 # ============================================================
 import time, threading
 import numpy as np
 import mujoco
 from sklearn.ensemble import RandomForestClassifier
-from shape_common import SHAPES, EMOJI, N_GRASP, extract_features
+from shape_common import SHAPES, EMOJI, N_GRASP, extract_features, Pacer, frame_camera
 import day2_5_shape_grasp_sim as G
 
 st = {"cmd": None, "run": True, "sel": 0}
@@ -74,6 +75,7 @@ def run():
     model = G.build_model(); d = mujoco.MjData(model); FQ = G.finger_q(model)
     BID  = {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY, f"OBJ_{s}") for s in SHAPES}
     OGEOM= {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_GEOM,f"OBJ_{s}") for s in SHAPES}
+    REF = G.measure_ref(model, d, FQ, close=G.CLOSE_DEMO)    # ★ 빈손·펼침 기준(막힌 비율용)
 
     def show(idx, pos):
         for s in SHAPES:
@@ -81,13 +83,14 @@ def run():
             model.geom_rgba[OGEOM[s]] = G.COLOR[s]
 
     cur_pos = G.jitter_pos(rng)                     # 물체 위치(학생이 J/L·I/K·U/M로 옮김)
-    banner(); show(0, cur_pos)
+    banner(); show(0, cur_pos); mujoco.mj_resetData(model, d)
     quat = IDENT.copy(); cur_v = -0.8
     phase = "idle"; frames = 0; buf = []; buf_mode = None
     CLOSE_F, HOLD_F, OPEN_F = G.CLOSE_STEPS, 40, 90
+    pacer = Pacer(model.opt.timestep)               # ★ 렌더 속도와 무관하게 실시간 물리
 
     def finish():
-        cs = SHAPES[st["sel"]]; feat = extract_features(buf)
+        cs = SHAPES[st["sel"]]; feat = extract_features(buf, ref=REF)
         if buf_mode == "collect":
             D["X"].append(feat); D["y"].append(st["sel"]); cc = counts()
             print(f"  ➕ 데이터 1개! [{EMOJI[cs]}{cs}] 총 {len(D['y'])}개  "
@@ -101,6 +104,7 @@ def run():
 
     threading.Thread(target=G.key_thread, args=(handle, lambda: st["run"]), daemon=True).start()
     with mujoco.viewer.launch_passive(model, d) as viewer:   # 키는 터미널에서만(key_thread)
+        frame_camera(viewer)                                 # ★ 손+물체가 한눈에
         while viewer.is_running() and st["run"]:
             cs = SHAPES[st["sel"]]
             model.body_quat[BID[cs]] = quat        # 정적 body 방향 = 학생이 돌린 자세
@@ -129,25 +133,27 @@ def run():
                     train()
                 elif kind in ("collect", "test"):
                     if buf_mode is None: buf = []; buf_mode = kind
+                    mujoco.mj_resetData(model, d); cur_v = -0.8   # 학습(4a)과 같은 초기상태에서 잡기
                     phase = "close"; frames = 0
 
-            tgt = 1.4 if phase == "close" else (-0.8 if phase == "open" else cur_v)
-            cur_v += np.clip(tgt - cur_v, -0.03, 0.03); d.ctrl[:] = G.ctrl_v(cur_v)
-
-            if phase in ("close","open","hold"):
-                frames += 1
-                if phase == "close" and frames >= CLOSE_F:
-                    buf.append(G.read_flex(d, FQ)); phase, frames = "hold", 0   # 다 잡은 뒤 읽기
-                elif phase == "hold" and frames >= HOLD_F: phase, frames = "open", 0
-                elif phase == "open" and frames >= OPEN_F:
-                    phase = "idle"
-                    if len(buf) < N_GRASP:
-                        nk = "G" if buf_mode == "collect" else "B"
-                        print(f"  ✊ 잡기 {len(buf)}/{N_GRASP} — 굴리고 다시 {nk} (다른 자세로!)")
-                    else:
-                        finish(); buf = []; buf_mode = None
-                        print("  → 위치(J/L·I/K·U/M)·자세(A/D·W/S·E/R)를 바꿔 다시 G")
-            mujoco.mj_step(model, d); viewer.sync(); time.sleep(0.002)
+            for _ in range(pacer.substeps()):            # ★ 물리 스텝 단위로 램프/카운트 (학습과 동일)
+                tgt = G.CLOSE_DEMO if phase == "close" else (-0.8 if phase == "open" else cur_v)
+                cur_v += np.clip(tgt - cur_v, -0.03, 0.03); d.ctrl[:] = G.ctrl_v(cur_v)
+                if phase in ("close","open","hold"):
+                    frames += 1
+                    if phase == "close" and frames >= CLOSE_F:
+                        buf.append(G.read_flex(d, FQ)); phase, frames = "hold", 0   # 다 잡은 뒤 읽기
+                    elif phase == "hold" and frames >= HOLD_F: phase, frames = "open", 0
+                    elif phase == "open" and frames >= OPEN_F:
+                        phase = "idle"
+                        if len(buf) < N_GRASP:
+                            nk = "G" if buf_mode == "collect" else "B"
+                            print(f"  ✊ 잡기 {len(buf)}/{N_GRASP} — 굴리고 다시 {nk} (다른 자세로!)")
+                        else:
+                            finish(); buf = []; buf_mode = None
+                            print("  → 위치(J/L·I/K·U/M)·자세(A/D·W/S·E/R)를 바꿔 다시 G")
+                mujoco.mj_step(model, d)
+            viewer.sync(); time.sleep(0.001)
     st["run"] = False
 
 if __name__ == "__main__":
@@ -156,5 +162,5 @@ if __name__ == "__main__":
         run()
     except Exception as e:
         import traceback; traceback.print_exc()
-        print("\n(MuJoCo 뷰어 실행 필요: mjpython day2_4b_shape_teach.py )")
+        print("\n(MuJoCo 뷰어 실행 필요: 맥 mjpython / 윈도우 python  day2_4b_shape_teach.py )")
     print("\n종료!")
