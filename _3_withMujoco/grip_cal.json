@@ -1,13 +1,13 @@
 {
   "OPEN_BEND": -80,
-  "CLOSE_TARGET": 100,
+  "CLOSE_TARGET": 90,
   "GAP": 12,
   "MARGIN": 12,
   "SETTLE": 1.3,
   "FREECLOSE": [
-    108.5,
-    110.5,
-    109.5,
-    110.0
+    88.5,
+    90.0,
+    88.5,
+    89.5
   ]
 }

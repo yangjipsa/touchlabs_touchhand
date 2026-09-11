@@ -63,7 +63,9 @@ try:
     from hand_driver import HandDriver
     hand = HandDriver(); hand.speed = 200
 except Exception as e:
-    print("⚠️  실물 없음 → 데모 모드(가상 물체로 흐름 시연):", e)
+    print("⚠️  실물 없음 → 데모 모드(흐름만 시연):", e)
+    print("    ※ 이 폴백은 '해석식 근사'라 판정이 자주 틀립니다(모델은 물리로 학습됨).")
+    print("    ▶ 하드웨어 없이 제대로 보려면:  day2_5_shape_grasp_sim.py  (MuJoCo 물리, 정확도 ~93%)")
     _demo_shape = np.random.choice(SHAPES)
     _demo_gain  = np.random.uniform(0.6, 1.4)
     _demo_off   = np.random.uniform(-0.4, 0.4)
