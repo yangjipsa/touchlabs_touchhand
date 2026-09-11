@@ -1,0 +1,33 @@
+# ============================================================
+#  API 키 파일 — 양식(템플릿)
+# ------------------------------------------------------------
+#  ▶ 사용법
+#   1) 이 파일을 같은 폴더에  api_key.txt  라는 이름으로 복사
+#        맥/리눅스 : cp api_key.txt.example api_key.txt
+#        윈도우    : copy api_key.txt.example api_key.txt
+#   2) 쓰는 API 줄의 맨 앞 '#' 을 지우고, 자기 키를 붙여넣기
+#   3) 저장 → day1_5_LLM_select.py / day1_6_LLM_create.py 가 자동으로 읽음
+#
+#  ▶ 규칙
+#   · '#' 으로 시작하는 줄은 무시됩니다(주석)
+#   · 형식은  이름 = 값     (따옴표 없어도 되고, 있어도 자동으로 벗김)
+#   · 키만 한 줄 덩그러니 써도 인식됩니다(그 경우 Claude 키로 간주)
+#
+#  ⚠️  api_key.txt 는 절대 공유·업로드 금지 (.gitignore 로 깃 제외돼 있음)
+#      이 .example 파일만 저장소에 올라갑니다.
+# ============================================================
+
+# ── Claude 를 쓸 때  (코드 상단 PROVIDER = "claude") ──
+# ANTHROPIC_API_KEY = sk-ant-여기에_키_붙여넣기
+
+# ── Gemini 를 쓸 때  (코드 상단 PROVIDER = "gemini") ──
+# GEMINI_API_KEY = AIza여기에_키_붙여넣기
+
+
+# ── 참고: 키 발급처 ──
+#   Claude  : https://console.anthropic.com  →  API Keys
+#   Gemini  : https://aistudio.google.com/apikey
+#
+# ── 참고: 파일 대신 환경변수로도 됩니다 ──
+#   맥/리눅스 : export ANTHROPIC_API_KEY=sk-ant-...
+#   윈도우    : setx ANTHROPIC_API_KEY "sk-ant-..."

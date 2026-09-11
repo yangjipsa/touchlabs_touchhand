@@ -12,7 +12,11 @@
 각 폴더의 `README.md`에 배선·업로드 옵션·실행법이 있습니다. 강의자료는 별도(강사 제공).
 
 ## 시작 전
-- **API 키**: LLM 제어(`_1_withESP32/day1_5·6`)는 각자 `api_key.txt`를 그 폴더에 만들어 넣습니다. **저장소에는 포함되지 않습니다**(`.gitignore`).
+- **API 키**: LLM 제어(`_1_withESP32/day1_5·6`)는 각자 키가 필요합니다. 양식 파일 **`_1_withESP32/api_key.txt.example`** 를 같은 폴더에 **`api_key.txt`** 로 복사한 뒤 키를 채우세요.
+  ```bash
+  cd _1_withESP32 && cp api_key.txt.example api_key.txt   # 윈도우: copy
+  ```
+  실제 키 파일은 **저장소에 포함되지 않습니다**(`.gitignore`). 발급: Claude=console.anthropic.com / Gemini=aistudio.google.com/apikey
 - **Edge Impulse 라이브러리**(`*_inferencing`)는 용량이 커서 미포함 — 학습 후 각자 설치. 설치 후 **overflow 패치(30→200)** 필요 (`_2_tinyML/README.md` 참고).
 
 ## 라이선스 · 출처
