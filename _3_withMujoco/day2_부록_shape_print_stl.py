@@ -14,12 +14,13 @@
 import numpy as np
 from pathlib import Path
 
-# 실물 프린트 치수(mm) — 시뮬(day2_5_shape_grasp_sim.SIZE)과 '동일 85mm'여야 함.
-#   크기가 다르면 잡는 방식이 달라져 육면체/타원을 구분 못함 → 시뮬=실물=85mm 통일 후 재학습.
+# 실물 프린트 치수(mm) — ★ day2_5_shape_grasp_sim.SIZE 와 반드시 일치 (sim2real 성립 조건).
+#   치수가 다르면 손가락 깊이 패턴이 달라져 시뮬 학습 모델이 실물에서 안 맞음.
+#   여기를 바꾸면 day2_5 의 SIZE 도 같이 바꾸고  day2_4a_shape_learn.py 재학습 필수.
 SPEC = {
     "구":       ("ellipsoid", dict(a=42.5, b=42.5, c=42.5)),  # 지름 85mm 공
-    "타원":     ("ellipsoid", dict(a=68.5, b=29.5, c=29.5)),  # 137(긴축) x 59 럭비공(비율 2.3:1)
-    "정육면체": ("cube",      dict(s=85.0)),                   # 85 정육면체
+    "타원":     ("ellipsoid", dict(a=60.0, b=35.0, c=35.0)),  # 120(긴축) x 70 럭비공
+    "정육면체": ("cube",      dict(s=75.0)),                   # 75mm 정육면체
 }
 
 def cylinder(r, H, nseg=120):
