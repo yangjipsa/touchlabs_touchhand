@@ -1,0 +1,31 @@
+# 왼손 실물 데모 dataflow — 이 수업 키트(왼손)용
+#  원본 dataflow_tracking_real.yml 을 왼손(r → l)으로 바꾼 것.
+#  넣을 위치:  <원본 Demo>/dataflow_tracking_real_left.yml
+#  실행:  dora build dataflow_tracking_real_left.yml --uv   (최초 1회)
+#         dora run   dataflow_tracking_real_left.yml --uv
+#  ⚠️ --serialport 는 이 PC의 실제 포트로. Windows 는 /dev/ 없이 COMx.
+nodes:
+  - id: hand_tracker
+    build: pip install -e HandTracking
+    path: HandTracking/HandTracking/main.py
+    inputs:
+      tick: dora/timer/millis/50
+    outputs:
+      - l_hand_pos
+
+  - id: l_hand_simulation
+    build: pip install -e AHSimulation
+    path: AHSimulation/AHSimulation/mj_mink_left.py
+    inputs:
+      l_hand_pos: hand_tracker/l_hand_pos
+      tick: dora/timer/millis/2
+      tick_ctrl: dora/timer/millis/10
+    outputs:
+      - mj_l_joints_pos
+
+  - id: hand_controller
+    build: cargo build -p AHControl
+    path: target/debug/AHControl
+    args: --serialport COM4 --config AHControl/config/l_hand.toml
+    inputs:
+      mj_l_joints_pos: l_hand_simulation/mj_l_joints_pos
