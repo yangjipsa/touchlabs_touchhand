@@ -145,15 +145,29 @@ def classify(clf, flex_list, ref):
 
 # ── 터미널 단일키 입력 (뷰어 단축키와 충돌 없음) ──
 def key_thread(handle, run_flag):
+    # 키를 '엔터 없이 한 글자씩' 받는다. OS마다 단일키 입력 방식이 달라 분기.
     try:
-        import termios, tty, select          # Mac/Linux: 단일키
+        import msvcrt                          # Windows: 단일키 입력 모듈(표준)
+        while run_flag():
+            if msvcrt.kbhit():                 # 눌린 키가 있으면
+                ch = msvcrt.getch()            # 한 글자 읽기(엔터 불필요)
+                try: handle(ch.decode(errors="ignore").lower())
+                except Exception: pass
+            else:
+                time.sleep(0.03)               # 없으면 잠깐 쉬어 CPU 절약
+        return
     except ImportError:
-        termios = tty = select = None         # Windows: 줄입력(Enter) 폴백
+        pass                                   # msvcrt 없음 = Mac/Linux → 아래로
+
+    try:
+        import termios, tty, select            # Mac/Linux: 단일키(termios raw 모드)
+    except ImportError:
+        termios = tty = select = None          # 둘 다 없으면: 줄입력(Enter) 폴백
     fd = sys.stdin.fileno()
     try: old = termios.tcgetattr(fd)
     except Exception: old = None
     try:
-        if old is not None: tty.setcbreak(fd)
+        if old is not None: tty.setcbreak(fd)  # raw 모드: 엔터 없이 즉시 읽기
         while run_flag():
             if old is not None:
                 r, _, _ = select.select([sys.stdin], [], [], 0.1)

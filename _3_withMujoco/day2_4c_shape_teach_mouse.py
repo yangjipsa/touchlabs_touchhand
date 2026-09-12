@@ -43,9 +43,9 @@ POS_STEP = 0.004
 
 # ── 마우스 드래그용 mocap 핸들 ──
 HANDLE_NAME  = "DRAG_HANDLE"
-HANDLE_OFFSET = np.array([0.0, 0.0, 0.06])     # 물체 중심에서 위로 6cm 띄워 잡기 쉽게
-HANDLE_R     = 0.02                              # 더블클릭·드래그하기 좋은 크기
-HANDLE_RGBA  = [0.15, 0.9, 0.5, 0.4]            # 반투명 초록(물체와 구분)
+HANDLE_OFFSET = np.array([0.0, 0.0, 0.09])     # 물체 위로 9cm 띄움(물체를 덜 가림)
+HANDLE_R     = 0.01                              # 작게(물체 가림 최소) — 더블클릭엔 충분
+HANDLE_RGBA  = [0.15, 0.9, 0.5, 0.28]           # 반투명 초록(덜 도드라지게)
 
 def counts():
     c = [0]*len(SHAPES)
