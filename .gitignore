@@ -22,3 +22,6 @@ venv/
 # ── 빌드 산출물 ──
 build/
 dist/
+
+# ── 잡기 캘리브(학생마다 다름, day2_3 의 k 로 각자 생성) ──
+grip_cal.json
