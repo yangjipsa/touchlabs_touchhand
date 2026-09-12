@@ -11,7 +11,8 @@
 #     · 그냥(왼쪽) 드래그/휠 = 시점 회전/줌
 #  ▶ 터미널: q = 종료
 #
-#  준비 : pip install mink loop-rate-limiters quadprog feetech-servo-sdk
+#  준비 : pip install mink loop-rate-limiters daqp feetech-servo-sdk
+#         (quadprog 은 C 컴파일러 필요 → 윈도우에서 설치 실패. daqp 로 대체)
 #         Waveshare 어댑터 = USB 모드로 컴퓨터에 직결 (XIAO 불필요)
 #  실행(★ 맥):  mjpython day2_2_sim_ik_real.py
 # ============================================================
@@ -24,6 +25,20 @@ import mujoco
 import mujoco.viewer
 import mink
 from loop_rate_limiters import RateLimiter
+
+# QP 솔버 자동 선택: 설치된 것 중 하나를 씀
+#  quadprog 은 C 컴파일러가 없는 PC(대부분의 윈도우)에서 설치가 안 됨.
+#  daqp / osqp 는 미리 빌드된 wheel 이 제공돼 컴파일 없이 설치됨 → 우선 사용.
+import qpsolvers
+for _s in ("daqp", "osqp", "quadprog", "proxqp", "scs"):
+    if _s in qpsolvers.available_solvers:
+        QP_SOLVER = _s
+        break
+else:
+    raise SystemExit(
+        "QP 솔버가 하나도 없습니다. Thonny 패키지 관리에서 'daqp' 를 설치하세요."
+    )
+print(f"⚙  IK QP 솔버: {QP_SOLVER}")
 
 BACKEND   = "both"      # "both"(시뮬+실물) / "sim"(시뮬만)
 STREAM_HZ = 12
@@ -121,7 +136,7 @@ with mujoco.viewer.launch_passive(model, data) as viewer:
                 mink.move_mocap_to_frame(model, data, tgt, tip, "site")
         for k, tgt in enumerate(TARGETS):
             tasks[2 + k].set_target(mink.SE3.from_mocap_name(model, data, tgt))
-        vel = mink.solve_ik(cfg, tasks, rate.dt, "quadprog", 1e-5)
+        vel = mink.solve_ik(cfg, tasks, rate.dt, QP_SOLVER, 1e-5)
         cfg.integrate_inplace(vel, rate.dt)
         viewer.sync()
         rate.sleep()
