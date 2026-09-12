@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 # ============================================================
-#  모양 인식 - 실물로 직접 가르치기 (sim2real 갭 해결 / 잡기 최소화)
+#  모양 인식 - 실물로 직접 가르치기 (sim2real 갭 해결 / 잡기 최소화)   [보정 학습]
 #   도형당 몇 번만 잡아 '풀'에 모으고, 학습 시 풀에서 랜덤 재조합(부트스트랩)해
 #   많은 표본을 만들어 학습 → 실제 잡는 횟수를 확 줄임(손가락 보호).
+#   실물 서보만 사용(MuJoCo 없음). 시뮬 모델이 실물에서 잘 안 맞을 때(sim2real 갭)
+#   실물 데이터로 직접 학습해 shape_model.pkl 을 덮어씀 → day2_6 이 그대로 사용.
+#
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 2절 = sim2real. 시뮬 학습(STEP4)이 실물 개체차로 안 맞으면 실물로 재학습.
+#     · 8절 = 잡을 때 막힌 손가락 깊이 = 신호(시뮬·실물 동일 정의).
+#     · 특징 추출 extract_features·REF 정의는 shape_common·day2_6 과 완전히 동일.
+#     · STEP3(day2_3)의 k 캘리브(FREECLOSE)를 grip_config 로 이어받아 '막힌 비율' 계산.
 #
 #  준비 : pip install feetech-servo-sdk scikit-learn joblib numpy
 #         Waveshare USB 직결 (점퍼 B)
-#  실행 : python3 day2_보정_shape_teach_real.py     (뷰어 불필요)
+#  실행 : python3 day2_보정_shape_teach_real.py     (3D 뷰어 불필요)
 #
 #  ▶ 키 (엔터 없이 하나만):
 #     1/2/3 = 도형 선택(구/타원/정육면체)
@@ -54,10 +62,10 @@ except Exception as e:
     print("⚠️  실물 손 없음 → 데모(랜덤)로 흐름만:", e)
 
 def one_grasp():
-    """한 번 잡고 [검지,중지약지,새끼,엄지] 깊이 반환. 읽은 뒤 편다."""
+    """한 번 잡고 [검지,중지약지,새끼,엄지] 깊이 반환. 읽은 뒤 편다. (→ 8절 접촉 깊이)"""
     if hand is not None:
-        hand.set_free([CLOSE_TARGET]*4, [0]*4); time.sleep(SETTLE)
-        rd = hand.read()   # [엄지,검지,중지약지,새끼]
+        hand.set_free([CLOSE_TARGET]*4, [0]*4); time.sleep(SETTLE)   # 닫기 → 안정될 때까지 대기
+        rd = hand.read()   # 서보 피드백 [엄지,검지,중지약지,새끼] = 실제 막힌 깊이
         d = [rd[i][0] if rd[i][0] is not None else CLOSE_TARGET for i in range(4)]
         hand.set_free([OPEN_BEND]*4, [0]*4)
         return np.array([d[1], d[2], d[3], d[0]])
@@ -80,9 +88,9 @@ def train():
     X, y = [], []
     for i in labels:
         pool = POOL[i]
-        for _ in range(AUG):                                  # 풀에서 N_GRASP개 복원추출 = 표본 1개
+        for _ in range(AUG):                                  # 풀에서 N_GRASP개 복원추출 = 표본 1개(부트스트랩)
             combo = [pool[rng.integers(len(pool))] for _ in range(N_GRASP)]
-            X.append(extract_features(combo, ref=REF)); y.append(i)
+            X.append(extract_features(combo, ref=REF)); y.append(i)   # 시뮬 학습과 같은 특징벡터로 변환
     X, y = np.array(X), np.array(y)
     m = RandomForestClassifier(n_estimators=200, random_state=0).fit(X, y)
     clf["m"] = m

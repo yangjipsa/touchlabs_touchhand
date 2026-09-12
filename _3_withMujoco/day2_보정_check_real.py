@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 # ============================================================
-#  실물 잡기 진단 — 도형별로 손가락이 실제 어떻게 읽히나 확인
-#  실행 : python3 day2_보정_check_real.py     (뷰어 불필요)
+#  실물 잡기 진단 — 도형별로 손가락이 실제 어떻게 읽히나 확인   [보정 도구]
+#  실물 서보만 사용(MuJoCo 없음). 실물이 도형을 잡을 때의 '손가락 깊이'를
+#  눈으로 확인해 sim2real 갭·개체차를 진단하는 도구.
+#
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 8절 = 잡기 = 손가락이 물체에 막혀 멈춤. 그 '막힌 깊이'가 판정 신호.
+#     · 이 값이 시뮬 학습(STEP4)과 다르면 sim2real 보정이 필요 → 보정 스크립트로 재학습.
+#     · CLOSE_TARGET·OPEN_BEND·SETTLE 등은 grip_config(STEP3에서 세팅)에서 공유.
+#
+#  준비 : pip install feetech-servo-sdk numpy   ·   Waveshare USB 직결
+#  실행 : python3 day2_보정_check_real.py     (3D 뷰어 불필요)
 #  키   : c = 한 번 잡아 값 보기   o = 펴기   q = 종료  (엔터 없이)
 #  → 구/타원/정육면체를 각각 2~3번 잡아 출력 숫자를 붙여주세요.
 # ============================================================
@@ -34,10 +43,10 @@ def read_open():
     return [rd[i][0] if rd[i][0] is not None else None for i in range(4)]
 
 def grasp():
-    hand.set_free([CLOSE_TARGET]*4, [0]*4); time.sleep(SETTLE)
-    rd = hand.read()
+    hand.set_free([CLOSE_TARGET]*4, [0]*4); time.sleep(SETTLE)   # 닫기 명령 → 다 움직일 때까지 대기
+    rd = hand.read()                                             # 서보 피드백 = 실제 멈춘 깊이(→ 8절)
     depth = [rd[i][0] if rd[i][0] is not None else None for i in range(4)]
-    hand.set_free([OPEN_BEND]*4, [0]*4)
+    hand.set_free([OPEN_BEND]*4, [0]*4)                          # 바로 펴서 다음 잡기 준비
     return depth
 
 print("="*60)

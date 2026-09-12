@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ============================================================
-#  모양 인식 ② 실제로 잡아서 맞히기  (sim2real 완성)
+#  모양 인식 ② 실제로 잡아서 맞히기  (sim2real 완성)   [STEP 6]
 #
 #  시뮬로 배운 분류기(shape_model.pkl)를 실제 손에 적용.
 #  물체를 4번(조금씩 돌려가며) 잡으면 → 4손가락 깊이 16개 → 모양 판정.
@@ -8,13 +8,19 @@
 #  ★ v2: STEP3 'k' 캘리브(FREECLOSE=빈손 기준)와 OPEN_BEND(펼침)로 '막힌 비율'을 계산해
 #        시뮬 학습과 같은 크기 특징을 씀 → 캘리브를 꼭 해두세요(없으면 폴백, 정확도↓).
 #
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 2절 = sim2real(시뮬에서 배운 것을 실물로) — STEP4 학습 → 이 파일에서 실물 적용
+#     · 8절 = 접촉으로 막힌 깊이가 신호 · STEP3(day2_3)의 캘리브를 grip_config 로 이어받음
+#     · 여기서 MuJoCo 는 '실물의 거울': 실제 손 값(depth)을 ctrl 로 넣어 3D로 비춤 → 5·6·11절
+#     · 특징 추출 extract_features 는 shape_common(시뮬 학습과 완전히 동일한 함수).
+#
 #  준비 : pip install feetech-servo-sdk mujoco joblib
 #         먼저  python day2_4a_shape_learn.py  로 shape_model.pkl 생성
 #         Waveshare USB 모드 연결 (없으면 시뮬 데모 모드)
 #  실행(★맥, 3D뷰):  mjpython day2_6_shape_grasp.py     (윈도우: python day2_6_shape_grasp.py)
 #        (뷰 없이):    python day2_6_shape_grasp.py
 #
-#  키 : c = 잡기(돌려가며 4번)   o = 리셋   q = 종료
+#  키(터미널 창) : c = 잡기(돌려가며 4번)   o = 리셋   q = 종료
 # ============================================================
 import time, threading
 from pathlib import Path
@@ -85,9 +91,10 @@ def do_one_grasp(k):
             state["depth"] = [rd[i][0] if rd[i][0] is not None else state["depth"][i] for i in range(4)]
             time.sleep(0.05)
         depth_anat = [rd[i][0] if rd[i][0] is not None else CLOSE_TARGET for i in range(4)]
-        if FREECLOSE:                                     # STEP 3 캘리브 있으면: 기준보다 덜 닫힘 = 잡음
+        # 막힘(잡음) 판정 = STEP3(day2_3)와 동일 규칙 (→ 8절: 막힌 깊이 = 신호)
+        if FREECLOSE:                                     # STEP 3 캘리브 있으면: 빈손 기준보다 덜 닫힘 = 잡음
             gripped = [(FREECLOSE[i] - depth_anat[i]) > MARGIN for i in range(4)]
-        else:                                             # 없으면: 고정 목표 폴백
+        else:                                             # 없으면: 고정 목표 폴백(정확도↓)
             gripped = [depth_anat[i] < CLOSE_TARGET - GAP for i in range(4)]
         # 읽고 바로 반환 → 호출부(session)가 매 잡기 후 손을 편다(다음 자세로 굴리게)
         # 특징용 순서 [검지,중지약지,새끼,엄지] = anat[1,2,3,0]
@@ -99,6 +106,7 @@ def do_one_grasp(k):
 
 def classify(grasps):
     ref = REF_REAL if hand is not None else REF_DEMO
+    # 실물 잡기 깊이들 → 시뮬 학습과 '같은' 특징벡터로 변환 → 학습된 분류기로 예측 (sim2real 핵심)
     x = extract_features(grasps, ref=ref).reshape(1, -1)
     proba = clf.predict_proba(x)[0]
     i = int(np.argmax(proba))
@@ -157,12 +165,12 @@ def session():
             state["grip"] = [False]*4                      # 펴지면 구슬 색 복귀(빨강 → 기본)
             state["busy"] = False
 
-# ── 3D 뷰어(있으면) : 실제 손 모습을 비춤 ──
+# ── 3D 뷰어(있으면) : 실제 손 모습을 비춤 (MuJoCo = 실물의 거울) ──
 def run_with_viewer():
     import mujoco, mujoco.viewer
     HERE = Path(__file__).resolve().parent
-    model = mujoco.MjModel.from_xml_path(str(HERE/"AHSimulation"/"AH_Left"/"mjcf"/"scene.xml"))
-    data = mujoco.MjData(model)
+    model = mujoco.MjModel.from_xml_path(str(HERE/"AHSimulation"/"AH_Left"/"mjcf"/"scene.xml"))  # 설계도 → 3절
+    data = mujoco.MjData(model)                                                                   # 상태 → 3절
     SIM = {"thumb": 3, "index": 0, "mid": 1, "pinky": 2}
     def pose_to_ctrl(flex4):
         c = [0.0]*8; vals = {"thumb":flex4[0],"index":flex4[1],"mid":flex4[2],"pinky":flex4[3]}
@@ -185,17 +193,17 @@ def run_with_viewer():
     with mujoco.viewer.launch_passive(model, data) as viewer:
         frame_camera(viewer)                                     # ★ 손이 한눈에
         while viewer.is_running() and state["run"]:
-            flex4 = [state["depth"][a]/250.0 for a in range(4)]
+            flex4 = [state["depth"][a]/250.0 for a in range(4)]  # 실물 읽은 깊이 → 시뮬 라디안 환산
             tgt = pose_to_ctrl(flex4)
-            for _ in range(pacer.substeps()):
+            for _ in range(pacer.substeps()):                    # 렌더 느려도 실시간 물리 → 6절
                 for k in range(8):
                     d = tgt[k]-cur[k]; cur[k] += 0.06 if d>0.06 else (-0.06 if d<-0.06 else d)
-                    data.ctrl[k] = cur[k]
-                mujoco.mj_step(model, data)
-            for sf in range(4):                                  # 잡힌 손가락 구슬 빨강
+                    data.ctrl[k] = cur[k]                        # 8모터 명령 → 5절 ctrl
+                mujoco.mj_step(model, data)                      # 물리 한 스텝 → 6절
+            for sf in range(4):                                  # 잡힌 손가락 구슬 빨강(geom_rgba 직접 수정)
                 if GEOM[sf] >= 0:
                     model.geom_rgba[GEOM[sf]] = RED if state["grip"][SIMFINGER_TO_ANAT[sf]] else GREEN
-            for i in range(4):                                   # 구슬을 손끝 위치로(따라다니게)
+            for i in range(4):                                   # 구슬(mocap)을 손끝 site 위치로(따라다니게) → 5절
                 if MOCAPID[i] >= 0 and TIPSITE[i] >= 0:
                     data.mocap_pos[MOCAPID[i]] = data.site_xpos[TIPSITE[i]]
             viewer.sync(); time.sleep(0.002)

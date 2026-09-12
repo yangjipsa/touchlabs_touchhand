@@ -1,14 +1,25 @@
 #!/usr/bin/env python3
 # ============================================================
-#  Amazing Hand - "잡으면 손이 안다" (실물 잡기 감지 + 시뮬 표시)
+#  Amazing Hand - "잡으면 손이 안다" (실물 잡기 감지 + 시뮬 표시)   [STEP 3]
 #  손을 닫으면, 물체에 막혀 멈춘 손가락을 read()로 감지하고
 #  시뮬에 실제 모습을 그대로 비추며 잡은 손가락을 빨갛게 표시.
 #
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 12절 STEP3 = "물리로 물체를 쥐고 막힌 손가락 감지" (이 파일)
+#     · 8절 = 충돌(접촉): 물체를 잡는다 = 손가락이 물체에 막혀 멈춘다.
+#             '멈춘 깊이'가 학습·판정 신호.
+#     · 이 파일은 실물 서보 피드백(read)으로 판정하고 그 모습을 시뮬에 '비추는' 구조.
+#     · 여기서 k(빈손 기준 FREECLOSE) 캘리브 → grip_config 로 STEP6(day2_6)과 공유.
+#     · 3·5절 = 모델/상태·ctrl · 6절 = mj_step 루프 · 11절 = 뷰어
+#  ▷ '막힘' 판정: 빈손으로 끝까지 닫은 깊이(FREECLOSE)보다 MARGIN 이상 덜 닫히면
+#     = 물체에 막힌 것 = 잡음. (개체차·작은 물체에 강함)
+#
 #  준비 : pip install feetech-servo-sdk mujoco
 #         Waveshare USB 모드 연결 (없으면 시뮬만 도는 데모 모드)
-#  실행(★ 맥):  mjpython day2_3_grasp_sim.py
+#  실행(★ 맥):  mjpython day2_3_grasp_sim.py   (윈도우/리눅스: python day2_3_grasp_sim.py)
 #
-#  키 : c = 손 닫기(잡기)   o = 펴기   q = 종료
+#  키(터미널 창) : k = 빈손 기준 측정(캘리브)  c = 손 닫기(잡기)  o = 펴기
+#                  +/- = 쥐는 힘 조절   q = 종료
 # ============================================================
 import time
 import threading
@@ -44,7 +55,7 @@ def pose_to_ctrl(flex4):                               # flex4=[엄지,검지,�
         v = vals[name]; c[fsim*2] = +v; c[fsim*2+1] = -v
     return c
 
-# 손끝 목표 구슬(mocap) geom 찾기 → 잡으면 색칠
+# 손끝 목표 구슬(mocap) geom 찾기 → 잡으면 색칠 (mj_name2id: 이름→id, → 10절 API)
 def target_geom(i):
     bid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, f"finger{i+1}_target")
     for g in range(model.ngeom):
@@ -102,11 +113,11 @@ def worker():
                           "→ 저장됨(STEP6 자동 사용). 이제 c 로 잡기")
                     hand.set_free([OPEN_BEND]*4, [0]*4)     # 펴기
                     state["cmd"] = "open"
-                else:                                       # 잡기 판정
+                else:                                       # 잡기 판정 (→ 8절: 막힌 깊이 = 신호)
                     for i in range(4):
-                        if FREECLOSE[i] is not None:        # 캘리브: 기준보다 덜 닫힘 = 막힘
+                        if FREECLOSE[i] is not None:        # 캘리브: 빈손 기준보다 MARGIN 이상 덜 닫힘 = 막힘
                             gripped[i] = (FREECLOSE[i] - state["actual"][i]) > MARGIN
-                        else:                               # 폴백: 목표 못 미침 = 막힘
+                        else:                               # 폴백(캘리브 없음): 목표 못 미침 = 막힘
                             gripped[i] = state["actual"][i] < CLOSE_TARGET - GAP
                     # 잡은 손가락은 접촉 지점에 고정 (그만 밀어서 부드럽게)
                     nt = [int(state["actual"][i]) if gripped[i] else CLOSE_TARGET for i in range(4)]
@@ -168,26 +179,26 @@ cur = [0.0] * 8
 GREEN = [0.2, 0.8, 0.3, 0.35]
 RED   = [1.0, 0.15, 0.1, 0.9]
 from shape_common import Pacer, frame_camera      # ★ 저사양/윈도우: 렌더와 물리 분리 + 카메라 프레이밍
-pacer = Pacer(model.opt.timestep)
-with mujoco.viewer.launch_passive(model, data) as viewer:
-    frame_camera(viewer)
+pacer = Pacer(model.opt.timestep)                 # model.opt.timestep = 한 스텝 시간(기본 2ms) → 6절
+with mujoco.viewer.launch_passive(model, data) as viewer:   # 대화형 3D 창 → 11절
+    frame_camera(viewer)                          # 손+물체가 한눈에 보이게 카메라 고정
     while viewer.is_running() and state["run"]:
         # 시뮬을 '실제(read) 위치'로  (실물의 지금 모습을 비춤)
-        flex4 = [state["actual"][a] / 250.0 for a in [0, 1, 2, 3]]  # 실물bend → 시뮬라디안
+        flex4 = [state["actual"][a] / 250.0 for a in [0, 1, 2, 3]]  # 실물bend → 시뮬라디안(환산)
         tgt = pose_to_ctrl(flex4)
-        for _ in range(pacer.substeps()):         # 렌더가 느려도 물리는 실시간에 맞춰 여러 스텝
+        for _ in range(pacer.substeps()):         # 렌더가 느려도 물리는 실시간에 맞춰 여러 스텝(→ 6절)
             for k in range(8):
                 diff = tgt[k] - cur[k]
                 cur[k] += SPEED_STEP if diff > SPEED_STEP else (-SPEED_STEP if diff < -SPEED_STEP else diff)
-                data.ctrl[k] = cur[k]
-            mujoco.mj_step(model, data)
-        # 잡은 손가락 구슬 빨갛게
+                data.ctrl[k] = cur[k]             # 8개 모터 명령 세팅 → 5절 ctrl
+            mujoco.mj_step(model, data)           # 물리 한 스텝(힘·접촉 계산 + 적분) → 6절
+        # 잡은 손가락 구슬 빨갛게 (geom_rgba 직접 수정 = 시각 표시)
         for sf in range(4):
             g = GEOM[sf]
             if g >= 0:
                 anat = SIMFINGER_TO_ANAT[sf]
                 model.geom_rgba[g] = RED if state["grip"][anat] else GREEN
-        for i in range(4):                       # 구슬을 손끝 위치로 (따라다니게)
+        for i in range(4):                       # 구슬(mocap)을 손끝 site 위치로 (따라다니게) → 5절
             data.mocap_pos[MOCAPID[i]] = data.site_xpos[TIPSITE[i]]
         viewer.sync()
         time.sleep(0.002)

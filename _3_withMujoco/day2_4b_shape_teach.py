@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 # ============================================================
-#  모양 인식 - "내가 직접 가르치기" (인터랙티브 학습, 하드웨어 없이)
+#  모양 인식 - "내가 직접 가르치기" (인터랙티브 학습, 하드웨어 없이)   [STEP 4·5 응용]
 #   학생이 도형을 3D로 굴려가며 직접 잡아서 데이터를 모으고 → 학습 → 테스트.
 #   = 머신러닝 전체 루프를 손으로 체험 (수집→학습→추론).
 #   판정은 MuJoCo가 실제로 잡을 때의 '손가락 깊이'(물리)로.
 #
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 12절 STEP4·5 = 시뮬로 데이터 모아 학습(여기선 학생이 손으로 수집)
+#     · 8절 = 접촉으로 막힌 손가락 깊이 = 학습 신호
+#     · 물체 회전 = body_quat(쿼터니언), 위치 = body_pos 직접 대입 → 7·9절
+#     · 3·5절 = 모델/상태·ctrl · 6절 = mj_step 루프(+Pacer) · 11절 = 뷰어
+#   ▷ 공용 엔진(build_model·read_flex·ctrl_v·rand_quat·qmul 등)은 day2_5(G) 에서 import.
+#
 #  ▶ 터미널 창을 클릭해 두고 키:
 #     Z : 가르칠 도형 바꾸기 (구/타원/정육면체)
 #     A/D : 좌우돌리기   W/S : 앞뒤굴리기   E/R : 옆으로굴리기   (3축!)
+#     J/L : 좌우이동   I/K : 앞뒤이동   U/M : 위아래이동  (물체 위치)
 #     G : 잡아서 수집(4번)   T : 학습   B : 맞혀보기   N : 블라인드   X : 종료
-#   ※ 숫자키/Space 등은 MuJoCo 뷰어 자체 기능이라 피했음
+#   ※ 숫자키/Space 등은 MuJoCo 뷰어 자체 기능이라 피했음 (→ 11.5절: 키 체계 분리)
 #
 #  준비 : pip install mujoco scikit-learn numpy
 #  실행(★맥):  mjpython day2_4b_shape_teach.py      (윈도우: python day2_4b_shape_teach.py)
@@ -72,10 +80,11 @@ def banner():
 def run():
     import mujoco.viewer
     rng = np.random.default_rng()
+    # build_model=설계도(mjModel), MjData=상태(mjData) → 3절. FQ=손가락 관절 qpos 주소 → 5절
     model = G.build_model(); d = mujoco.MjData(model); FQ = G.finger_q(model)
-    BID  = {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY, f"OBJ_{s}") for s in SHAPES}
-    OGEOM= {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_GEOM,f"OBJ_{s}") for s in SHAPES}
-    REF = G.measure_ref(model, d, FQ, close=G.CLOSE_DEMO)    # ★ 빈손·펼침 기준(막힌 비율용)
+    BID  = {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY, f"OBJ_{s}") for s in SHAPES}   # 물체 body id → 10절
+    OGEOM= {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_GEOM,f"OBJ_{s}") for s in SHAPES}   # 물체 geom id(색칠용)
+    REF = G.measure_ref(model, d, FQ, close=G.CLOSE_DEMO)    # ★ 빈손·펼침 기준(막힌 비율용) = 실물 캘리브와 같은 정의
 
     def show(idx, pos):
         for s in SHAPES:
@@ -90,6 +99,7 @@ def run():
     pacer = Pacer(model.opt.timestep)               # ★ 렌더 속도와 무관하게 실시간 물리
 
     def finish():
+        # N_GRASP 번 잡은 깊이(buf) → 특징벡터. ref=빈손·펼침 기준(막힌 비율=크기 정보). 공용 함수
         cs = SHAPES[st["sel"]]; feat = extract_features(buf, ref=REF)
         if buf_mode == "collect":
             D["X"].append(feat); D["y"].append(st["sel"]); cc = counts()
@@ -107,8 +117,8 @@ def run():
         frame_camera(viewer)                                 # ★ 손+물체가 한눈에
         while viewer.is_running() and st["run"]:
             cs = SHAPES[st["sel"]]
-            model.body_quat[BID[cs]] = quat        # 정적 body 방향 = 학생이 돌린 자세
-            model.body_pos[BID[cs]]  = cur_pos     # 정적 body 위치 = 학생이 옮긴 위치
+            model.body_quat[BID[cs]] = quat        # 정적 body 방향 = 학생이 돌린 자세(쿼터니언) → 7·9절
+            model.body_pos[BID[cs]]  = cur_pos     # 정적 body 위치 = 학생이 옮긴 위치 → 9절
 
             cmd = st["cmd"]; st["cmd"] = None
             if cmd and phase == "idle":
@@ -123,9 +133,9 @@ def run():
                     cur_pos = G.jitter_pos(rng); show(st["sel"], cur_pos)
                     quat = G.rand_quat(rng); buf = []; buf_mode = None
                     print("  🙈 숨김 도형 — 굴리며 B 3번 = 맞혀보기")
-                elif kind == "rot":
+                elif kind == "rot":                       # 축 회전을 현재 자세에 곱해 누적(쿼터니언 곱) → 7절
                     ax, sgn = ROT[val]; quat = G.qmul(G.axis_quat(AXIS[ax], sgn*np.deg2rad(20)), quat)
-                    quat = quat/np.linalg.norm(quat); print(f"  ↻ 굴림 ({val.upper()})")
+                    quat = quat/np.linalg.norm(quat); print(f"  ↻ 굴림 ({val.upper()})")  # 정규화(길이 1 유지)
                 elif kind == "move":
                     ax, sgn = MOVE[val]; cur_pos = cur_pos.copy(); cur_pos[AXI[ax]] += sgn * POS_STEP
                     print(f"  ⇄ 이동 ({val.upper()})  pos={np.round(cur_pos, 3)}")
@@ -133,16 +143,16 @@ def run():
                     train()
                 elif kind in ("collect", "test"):
                     if buf_mode is None: buf = []; buf_mode = kind
-                    mujoco.mj_resetData(model, d); cur_v = -0.8   # 학습(4a)과 같은 초기상태에서 잡기
+                    mujoco.mj_resetData(model, d); cur_v = -0.8   # 상태 초기화(4a 학습과 같은 시작점) → 3·13절
                     phase = "close"; frames = 0
 
-            for _ in range(pacer.substeps()):            # ★ 물리 스텝 단위로 램프/카운트 (학습과 동일)
+            for _ in range(pacer.substeps()):            # ★ 물리 스텝 단위로 램프/카운트 (학습과 동일) → 6절
                 tgt = G.CLOSE_DEMO if phase == "close" else (-0.8 if phase == "open" else cur_v)
-                cur_v += np.clip(tgt - cur_v, -0.03, 0.03); d.ctrl[:] = G.ctrl_v(cur_v)
+                cur_v += np.clip(tgt - cur_v, -0.03, 0.03); d.ctrl[:] = G.ctrl_v(cur_v)   # 모터 명령 램프 → 5절 ctrl
                 if phase in ("close","open","hold"):
                     frames += 1
                     if phase == "close" and frames >= CLOSE_F:
-                        buf.append(G.read_flex(d, FQ)); phase, frames = "hold", 0   # 다 잡은 뒤 읽기
+                        buf.append(G.read_flex(d, FQ)); phase, frames = "hold", 0   # 다 잡은 뒤 막힌 깊이 읽기 → 8절
                     elif phase == "hold" and frames >= HOLD_F: phase, frames = "open", 0
                     elif phase == "open" and frames >= OPEN_F:
                         phase = "idle"
@@ -152,8 +162,8 @@ def run():
                         else:
                             finish(); buf = []; buf_mode = None
                             print("  → 위치(J/L·I/K·U/M)·자세(A/D·W/S·E/R)를 바꿔 다시 G")
-                mujoco.mj_step(model, d)
-            viewer.sync(); time.sleep(0.001)
+                mujoco.mj_step(model, d)         # 물리 한 스텝(힘·접촉 계산 + 적분) → 6절
+            viewer.sync(); time.sleep(0.001)     # 계산 결과를 3D 창에 그림
     st["run"] = False
 
 if __name__ == "__main__":

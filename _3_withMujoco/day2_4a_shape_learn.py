@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # ============================================================
-#  모양 인식 ① 시뮬로 학습  (MuJoCo 물리 접촉 + 3축 회전)
+#  모양 인식 ① 시뮬로 학습  (MuJoCo 물리 접촉 + 3축 회전)   [STEP 4·5 학습공장]
 #
 #  MuJoCo 가상 손이 물체를 '실제로' 4번(3D로 굴려가며) 잡을 때의
 #  손가락 깊이 → 3가지 도형(구·타원·정육면체) 분류기 학습.
@@ -9,8 +9,17 @@
 #  · ★ v2: 표본마다 '빈손 기준'(free)도 재서 '막힌 비율' 특징 추가 → 크기 반영
 #          (실물의 STEP3 'k' 캘리브 FREECLOSE 와 같은 정의라 그대로 전이)
 #
-#  실행:  python day2_4a_shape_learn.py       (하드웨어 불필요, ~2분)
-#  결과:  shape_model.pkl  +  day2_4a_shape_learn.png
+#  ▷ 강의자료 연결(MuJoCo_자료.md):
+#     · 12절 STEP4·5 = "가상 손으로 수백 번 잡아 학습 데이터 생성" (이 파일 = 데이터 공장)
+#     · 2절 = 시뮬로 대량 데이터 생성(손 없이도 도는 이유) · 8절 = 접촉으로 막힌 깊이 = 신호
+#     · 3D 뷰어 없이 헤드리스로 물리만 돌림(settle→mj_step) → 6절
+#     · 물체 방향은 body_quat(쿼터니언)로 직접 회전 → 7절(회전)·9절(정적 body)
+#  ▷ 공용 엔진: build_model·measure_ref·read_flex·rand_quat 등은
+#     day2_5_shape_grasp_sim.py(G) 에서 import (STEP5 데모와 완전히 동일한 물리).
+#     특징 추출 extract_features 는 shape_common(실물 STEP6과 공유).
+#
+#  실행:  python day2_4a_shape_learn.py       (하드웨어·3D창 불필요, ~2분)
+#  결과:  shape_model.pkl  +  day2_4a_shape_learn.png (혼동행렬 성적표)
 #  준비:  pip install numpy scikit-learn matplotlib joblib mujoco
 # ============================================================
 import platform
@@ -51,19 +60,21 @@ DR_GAIN  = (0.70, 1.30)   # 손가락별 읽기 배율 랜덤
 DR_OFF   = (-0.35, 0.35)  # 손가락별 읽기 오프셋 랜덤
 DR_CLOSE = (1.20, 1.60)   # 쥐는 정도(닫힘 깊이) 랜덤
 
+# build_model=설계도(mjModel), MjData=상태 그릇 → 3절. FQ=손가락별 관절 qpos 주소 → 5절
 model = G.build_model(); data = mujoco.MjData(model); FQ = G.finger_q(model)
+# 물체(정적 body) 이름 → id (→ 10절 mj_name2id, 9절 정적 body)
 BID  = {s: mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY, f"OBJ_{s}") for s in SHAPES}
 _, OPEN_REF = G.measure_ref(model, data, FQ, close=G.CLOSE_DEMO)   # 펼침 기준은 닫힘 정도와 무관 → 1회
 
 def place(active, pos):
-    for s in SHAPES:
+    for s in SHAPES:                           # 잡을 물체만 pos 에, 나머지는 멀리 치움(AWAY_POS)
         model.body_pos[BID[s]] = pos if s == active else G.AWAY_POS
 
 def grasp(active, quat, close=1.4):
-    """물체를 quat 자세로 두고 손을 close 만큼 닫아(물리) 손가락 깊이 읽기."""
-    model.body_quat[BID[active]] = quat        # 정적 body 방향 = 물체 회전
-    G.settle(model, data, close)
-    return G.read_flex(data, FQ) + rng.normal(0, NOISE, 4)
+    """물체를 quat 자세로 두고 손을 close 만큼 닫아(물리) 손가락 깊이 읽기. (→ 8절 접촉)"""
+    model.body_quat[BID[active]] = quat        # 정적 body 방향 = 물체 회전 (쿼터니언 직접 대입 → 7·9절)
+    G.settle(model, data, close)               # 손을 close 까지 닫으며 여러 스텝 진행(mj_step) → 6절
+    return G.read_flex(data, FQ) + rng.normal(0, NOISE, 4)   # 막힌 깊이 읽기(+센서 잡음) → 5·8절
 
 def sample(shape):
     close = rng.uniform(*DR_CLOSE)                                    # 쥐는 정도 랜덤
@@ -71,9 +82,10 @@ def sample(shape):
     place(shape, G.jitter_pos(rng))                                   # 샘플당 물체 위치 랜덤(한자리 놓고 돌리기)
     gain  = rng.uniform(*DR_GAIN, 4)                                  # 이 표본의 '가상 손' 손가락별 보정
     off   = rng.uniform(*DR_OFF, 4)
+    # N_GRASP 번 3D 랜덤 자세(rand_quat)로 잡아 = 능동 지각. 손별 보정(gain·off) 적용
     grasps = [gain*grasp(shape, G.rand_quat(rng), close) + off for _ in range(N_GRASP)]
     ref    = (gain*free + off, gain*OPEN_REF + off)                   # 기준도 같은 손(같은 보정)으로 잰 값
-    return extract_features(grasps, ref=ref)
+    return extract_features(grasps, ref=ref)                          # 깊이들 → 학습용 특징벡터(공용)
 
 print("="*52)
 print(f"  MuJoCo 물리 학습 v{FEAT_VERSION} : {len(SHAPES)}도형 × {N_PER} × {N_GRASP}번잡기(3D자세) + 빈손기준")
