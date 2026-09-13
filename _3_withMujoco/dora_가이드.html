@@ -1,0 +1,534 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@400;500;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap">
+<title>dora-rs 가이드 — 원본 데모 실행</title>
+<style>
+:root{
+  --bg:#F7F5F0; --panel:#FFFFFF; --ink:#1B2230; --soft:#54607A; --faint:#8A93A3;
+  --line:#E7E3DA; --line2:#EFECE4; --brand:#E8622A; --brand-soft:#FBEADF;
+  --teal:#0E7C86; --teal-soft:#DDF0F0; --code-bg:#1C2230; --code-ink:#E6E9EF;
+  --warn-bg:#FDF3E7; --warn-line:#E8622A;
+}
+*{box-sizing:border-box} html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Gothic A1",system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+.doc{max-width:860px;margin:0 auto;padding:50px 24px 80px}
+code,pre,.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+h1{font-weight:900;font-size:clamp(30px,5vw,44px);line-height:1.15;letter-spacing:-.8px;margin:0 0 6px;text-wrap:balance}
+h2{font-weight:900;font-size:25px;letter-spacing:-.4px;margin:52px 0 14px;padding-top:20px;border-top:2px solid var(--line)}
+h3{font-weight:800;font-size:18.5px;margin:30px 0 8px}
+h4{font-weight:800;font-size:15px;margin:18px 0 6px;color:var(--soft)}
+p{margin:0 0 13px}
+a{color:var(--brand);text-decoration:none;border-bottom:1px solid transparent} a:hover{border-color:currentColor}
+blockquote{margin:16px 0;padding:14px 18px;background:var(--warn-bg);border-left:4px solid var(--warn-line);border-radius:0 12px 12px 0}
+blockquote p{margin:0 0 6px;font-size:14.5px} blockquote p:last-child{margin:0} blockquote table{margin:8px 0}
+ul,ol{margin:0 0 14px;padding-left:22px} li{margin:4px 0}
+li.task{list-style:none;margin-left:-16px}
+img{max-width:100%;border-radius:14px;display:block;margin:6px auto}
+p[align="center"]{text-align:center}
+pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:15px 18px;overflow-x:auto;font-size:13px;line-height:1.65;margin:12px 0}
+pre code{background:none;border:0;padding:0;color:inherit;font-size:13px}
+:not(pre)>code{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:12.5px;color:var(--brand);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:13.8px;margin:14px 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font-weight:800;background:color-mix(in srgb,var(--brand) 8%,var(--panel));font-size:13px}
+td code,th code{white-space:normal}
+hr{border:0;border-top:1px solid var(--line);margin:34px 0}
+.dgm{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;justify-content:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 16px;margin:16px 0}
+.dnode{display:flex;flex-direction:column;justify-content:center;gap:2px;text-align:center;padding:12px 15px;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:14px;min-width:92px}
+.dnode b{font-weight:800} .dnode small{color:var(--soft);font-size:11.5px;line-height:1.3}
+.dnode.c1{border-color:var(--brand);background:var(--brand-soft)}
+.dnode.c2{border-color:var(--teal);background:var(--teal-soft)}
+.dnode.c3{border-color:var(--brand);background:var(--brand)} .dnode.c3 b{color:#fff} .dnode.c3 small{color:rgba(255,255,255,.85)}
+.darrow{display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--faint);font-size:10px;font-weight:700;padding:0 2px}
+.darrow i{font-style:normal;font-size:20px;color:var(--brand);line-height:1}
+.doc>ol:first-of-type{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 22px 16px 40px}
+</style>
+<div class="doc"><h1 id="dora-rs-amazinghand">dora-rs 가이드 — 원본 AmazingHand 데모 이해와 실행</h1>
+<p>원본 AmazingHand(<code>Demo/</code>)는 <strong>dora-rs</strong> 위에서 동작한다. 이 문서는 dora의 개념, 설치, 데모 실행, 문제 해결을 다룬다.</p>
+<blockquote>
+<p>이 수업의 Day2는 원본 dora 구조를 STEP별로 분해해 파이썬만으로 재구성한 것이다. dora 자체는 수업 필수가 아니며, "원본은 어떻게 돌아가는가"를 이해하기 위한 보조 자료다.</p>
+</blockquote>
+<hr />
+<h2 id="1-dora">1. dora란</h2>
+<ul>
+<li><strong>dora-rs = 로봇·AI용 데이터플로우 런타임.</strong> 작은 프로그램(노드)들을 메시지로 연결해 실행한다.</li>
+<li>Rust로 작성되어 가볍고 지연이 짧다. ROS의 대안으로 개발됨.</li>
+<li>노드는 독립 프로세스로 실행되고, 언어를 섞을 수 있다(이 프로젝트는 Python + Rust).</li>
+<li>노드 간 연결은 <strong>YAML 파일(dataflow)</strong> 로 선언한다.</li>
+</ul>
+<h3 id="11-ros">1.1 ROS와의 비교</h3>
+<table>
+<thead>
+<tr>
+<th>개념</th>
+<th>ROS / ROS2</th>
+<th>dora-rs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>프로그램 단위</td>
+<td>노드(node)</td>
+<td>노드(node)</td>
+</tr>
+<tr>
+<td>노드 간 통신</td>
+<td>토픽 발행/구독</td>
+<td>입력/출력 스트림</td>
+</tr>
+<tr>
+<td>실행 묶음</td>
+<td>launch 파일</td>
+<td>dataflow YAML</td>
+</tr>
+<tr>
+<td>언어</td>
+<td>C++ / Python</td>
+<td>Python / Rust</td>
+</tr>
+<tr>
+<td>등장</td>
+<td>2007~</td>
+<td>2022~</td>
+</tr>
+<tr>
+<td>특성</td>
+<td>표준·방대한 생태계</td>
+<td>신생·빠름·경량</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>두 프레임워크 모두 "지각 → 판단 → 구동"을 노드로 분리하는 사고방식을 공유한다.</li>
+<li>dora는 카메라·AI 추론처럼 데이터가 빠르게 흐르는 작업에 유리하다.</li>
+<li>ROS는 생태계(드라이버·툴)가 크고, dora는 아직 작다.</li>
+</ul>
+<h3 id="12-amazinghand-3">1.2 AmazingHand의 노드 3개</h3>
+<table>
+<thead>
+<tr>
+<th>노드</th>
+<th>언어</th>
+<th>역할</th>
+<th>입력 → 출력</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HandTracking</strong></td>
+<td>Python</td>
+<td>지각</td>
+<td>웹캠 → 손끝 목표 위치</td>
+</tr>
+<tr>
+<td><strong>AHSimulation</strong></td>
+<td>Python</td>
+<td>판단</td>
+<td>손끝 목표 → 관절각 8개 (MuJoCo + mink IK)</td>
+</tr>
+<tr>
+<td><strong>AHControl</strong></td>
+<td>Rust</td>
+<td>구동</td>
+<td>관절각 → 모터 (Feetech 시리얼)</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>HandTracking: Mediapipe로 웹캠에서 손 keypoint 21개 추출 → 손목 기준 좌표로 손끝 4개 목표 계산. 출력 <code>r_hand_pos</code> / <code>l_hand_pos</code>.</li>
+<li>AHSimulation: MJCF <code>scene.xml</code> 로드, mink IK로 관절각 계산, <code>mujoco.viewer</code>로 3D 창. Day2의 <code>day2_2_sim_ik_real.py</code>가 이 노드에 대응.</li>
+<li>AHControl: TOML 설정(모터 ID·영점·방향)으로 SCS0009 서보 구동. Day2에선 파이썬 시리얼 스크립트로 대체.</li>
+</ul>
+<h3 id="13-3-4">1.3 노드 3개 × 조합 = 데모 4개</h3>
+<p>노드는 재사용하고, 연결(dataflow YAML)만 바꿔 여러 데모를 만든다.</p>
+<table>
+<thead>
+<tr>
+<th>dataflow 파일</th>
+<th>연결</th>
+<th>결과</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dataflow_tracking_simu.yml</code></td>
+<td>웹캠 → 추적 → 시뮬</td>
+<td>3D 화면만 (하드웨어 불필요)</td>
+</tr>
+<tr>
+<td><code>dataflow_tracking_real.yml</code></td>
+<td>+ 제어 → 손</td>
+<td>실물 손이 웹캠 손을 따라함</td>
+</tr>
+<tr>
+<td><code>dataflow_tracking_real_2hands.yml</code></td>
+<td>시뮬·제어 ×2</td>
+<td>양손</td>
+</tr>
+<tr>
+<td><code>dataflow_angle_simu.yml</code></td>
+<td>각도 → 시뮬</td>
+<td>웹캠 없이 각도 직접 입력</td>
+</tr>
+</tbody>
+</table>
+<h3 id="14-dataflow-yaml">1.4 dataflow YAML 읽는 법</h3>
+<p><code>dataflow_tracking_simu.yml</code>의 연결 구조:</p>
+<pre><code class="language-yaml">nodes:
+  - id: hand_tracker              # 웹캠 노드
+    outputs: [r_hand_pos]          #   → 손끝 위치 출력
+
+  - id: r_hand_simulation          # 시뮬 노드
+    inputs:
+      r_hand_pos: hand_tracker/r_hand_pos   # 위 노드의 출력을 입력으로
+    outputs: [mj_r_joints_pos]     #   → 관절각 출력
+</code></pre>
+<ul>
+<li><code>A/B</code> 표기 = "A 노드의 B 출력". 예: <code>hand_tracker/r_hand_pos</code>.</li>
+<li><code>tick: dora/timer/millis/50</code> = 50ms 주기 실행(20Hz). 시뮬 노드는 <code>millis/2</code>(500Hz).</li>
+</ul>
+<hr />
+<h2 id="2">2. 설치</h2>
+<p>순서: Rust → uv → dora CLI. 3개 모두 필요.</p>
+<h3 id="21-rust">2.1 Rust</h3>
+<p>모터 제어 노드(AHControl)와 dora 일부가 Rust다.</p>
+<ul>
+<li>설치: https://www.rust-lang.org/tools/install</li>
+<li>확인: <code>cargo --version</code></li>
+</ul>
+<h3 id="22-uv">2.2 uv</h3>
+<p>파이썬 노드의 패키지·가상환경 관리 도구.</p>
+<ul>
+<li>Windows(cmd/PowerShell 공통, 파이썬 있을 때): <code>pip install uv</code></li>
+<li>또는 PowerShell 스크립트: <code>powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"</code></li>
+<li>macOS/Linux: <code>curl -LsSf https://astral.sh/uv/install.sh | sh</code></li>
+<li><strong>설치 후 터미널을 새로 연다</strong>(PATH 갱신). 기존 창은 uv를 인식하지 못함.</li>
+<li>확인: <code>uv --version</code></li>
+</ul>
+<h3 id="23-dora-cli">2.3 dora CLI — 버전 주의 ★</h3>
+<p>이 프로젝트의 노드는 <code>pyproject.toml</code>에서 <strong><code>dora-rs &gt;=0.3.11, &lt;=0.3.13</code></strong> 을 요구한다. CLI 버전이 이와 다르면 통신 규격이 어긋나 실행이 실패한다(§4.1).</p>
+<ul>
+<li><strong>최신(1.0.x)을 설치하면 안 됨.</strong> 노드에 맞춰 <strong>0.3.13</strong>을 설치한다.</li>
+<li><strong>권장(빠름) — pip:</strong> <code>pip install dora-rs-cli==0.3.13</code>  ← 미리 빌드된 파일, 1~2분</li>
+<li>대안 — cargo(소스 컴파일, 5~20분): <code>cargo install dora-cli --version 0.3.13 --locked</code></li>
+<li>확인: <code>dora --version</code> → <code>0.3.x</code> 표시</li>
+<li>이미 최신을 깔았다면 먼저 제거: <code>cargo uninstall dora-cli</code></li>
+</ul>
+<blockquote>
+<p>패키지 이름 구분: <code>dora-rs-cli</code> = <code>dora</code> 명령어(CLI). <code>dora-rs</code> = 파이썬 API(노드 코드 import용). 둘은 별개이며 버전을 맞춘다.</p>
+</blockquote>
+<h3 id="24-cli">2.4 CLI와 노드 라이브러리 버전 일치 원칙</h3>
+<ul>
+<li>dora CLI(데몬)와 파이썬 <code>dora-rs</code>는 <strong>같은 계열 버전</strong>이어야 한다.</li>
+<li>CLI 0.3.13 ↔ 노드 dora-rs 0.3.x = 일치.</li>
+<li>CLI 1.0.1 ↔ 노드 dora-rs 0.3.x = 불일치 → 등록 메시지 역직렬화 실패.</li>
+</ul>
+<hr />
+<h2 id="3">3. 데모 실행</h2>
+<p>Demo 폴더에서 진행. 각 데모는 build(1회) → run 순서.</p>
+<h3 id="31">3.1 가상환경 준비</h3>
+<pre><code class="language-bash">cd .../AmazingHand-main/Demo
+uv venv --python 3.12
+</code></pre>
+<ul>
+<li>파이썬 <strong>3.12</strong> 사용(3.14 등 최신은 패키지 wheel 문제 소지).</li>
+</ul>
+<h3 id="32">3.2 시뮬 데모 (하드웨어 불필요, 웹캠만)</h3>
+<pre><code class="language-bash">dora build dataflow_tracking_simu.yml --uv    # 최초 1회
+dora run   dataflow_tracking_simu.yml --uv
+</code></pre>
+<ul>
+<li>웹캠에 손을 비추면 3D 시뮬 손(좌·우)이 따라 움직인다.</li>
+<li><strong>웹캠 영상 창</strong>: 제목 <code>MediaPipe Hands</code>. MuJoCo 3D 창 뒤에 가려질 수 있으므로 작업표시줄이나 Alt+Tab으로 전환해 확인한다.</li>
+<li>종료: 터미널에서 <code>Ctrl + C</code>.</li>
+</ul>
+<h3 id="33">3.3 각도 데모 (웹캠 없이)</h3>
+<pre><code class="language-bash">dora build dataflow_angle_simu.yml --uv
+dora run   dataflow_angle_simu.yml --uv
+</code></pre>
+<ul>
+<li>카메라 없이 관절각을 직접 넣어 시뮬만 확인. dora 구조 점검용.</li>
+</ul>
+<h3 id="34">3.4 실물 데모 — 왼손 (이 수업 키트 기준) ★</h3>
+<p>이 수업 키트는 <strong>왼손</strong>이므로 왼손용 dataflow·config를 쓴다. 원본은 오른손 기준이라 그대로 실행하면 동작하지 않는다.</p>
+<p><strong>① 왼손 config 만들기</strong> — <code>AHControl/config/l_hand.toml</code> 신규 생성</p>
+<ul>
+<li><code>finger_name</code>은 <strong><code>l_finger1</code>~<code>l_finger4</code></strong> 여야 한다. 왼손 시뮬 노드(<code>mj_mink_left.py</code>)가 이 이름으로 관절 데이터를 보내고, AHControl은 config의 <code>finger_name</code>으로 그 데이터를 찾기 때문. 이름이 <code>r_finger</code>면 매핑을 못 찾아 손가락이 안 움직인다.</li>
+<li><code>motor1/2.id</code>는 <strong>이 키트의 실제 모터 ID(1~8)</strong>. 매핑: finger1=1·2, finger2=3·4, finger3=5·6, finger4=7·8.</li>
+<li><code>invert</code>는 <strong>8개 모두 <code>true</code></strong>. 왼손은 오른손의 거울상이라 회전 방향이 반대 → false로 두면 굽힘·폄이 뒤바뀐다.</li>
+</ul>
+<pre><code class="language-toml"># Config for the left hand — 실제 모터 ID 1~8, 왼손이라 invert=true
+[Fingers]
+[[motors]]
+finger_name=&quot;l_finger1&quot;
+motor1.id = 1
+motor1.offset = 0.12217304763960307
+motor1.invert = true
+motor1.model = &quot;SCS0009&quot;
+motor2.id = 2
+motor2.offset = 0.08726646259971647
+motor2.invert = true
+motor2.model = &quot;SCS0009&quot;
+[[motors]]
+finger_name=&quot;l_finger2&quot;
+motor1.id = 3
+motor1.offset = 0.0
+motor1.invert = true
+motor1.model = &quot;SCS0009&quot;
+motor2.id = 4
+motor2.offset = 0.12217304763960307
+motor2.invert = true
+motor2.model = &quot;SCS0009&quot;
+[[motors]]
+finger_name=&quot;l_finger3&quot;
+motor1.id = 5
+motor1.offset = 0.08726646259971647
+motor1.invert = true
+motor1.model = &quot;SCS0009&quot;
+motor2.id = 6
+motor2.offset = 0.12217304763960307
+motor2.invert = true
+motor2.model = &quot;SCS0009&quot;
+[[motors]]
+finger_name=&quot;l_finger4&quot;
+motor1.id = 7
+motor1.offset = 0.0
+motor1.invert = true
+motor1.model = &quot;SCS0009&quot;
+motor2.id = 8
+motor2.offset = 0.12217304763960307
+motor2.invert = true
+motor2.model = &quot;SCS0009&quot;
+</code></pre>
+<p><strong>② 왼손 dataflow 만들기</strong> — <code>dataflow_tracking_real_left.yml</code> 신규 생성</p>
+<p>오른손 데모에서 <code>r</code>→<code>l</code>로 바꾼 것. 노드 이름·출력·config가 전부 왼손.</p>
+<pre><code class="language-yaml">nodes:
+  - id: hand_tracker
+    build: pip install -e HandTracking
+    path: HandTracking/HandTracking/main.py
+    inputs:
+      tick: dora/timer/millis/50
+    outputs:
+      - l_hand_pos
+
+  - id: l_hand_simulation
+    build: pip install -e AHSimulation
+    path: AHSimulation/AHSimulation/mj_mink_left.py
+    inputs:
+      l_hand_pos: hand_tracker/l_hand_pos
+      tick: dora/timer/millis/2
+      tick_ctrl: dora/timer/millis/10
+    outputs:
+      - mj_l_joints_pos
+
+  - id: hand_controller
+    build: cargo build -p AHControl
+    path: target/debug/AHControl
+    args: --serialport COM4 --config AHControl/config/l_hand.toml
+    inputs:
+      mj_l_joints_pos: l_hand_simulation/mj_l_joints_pos
+</code></pre>
+<ul>
+<li><strong>시리얼 포트</strong>: <code>--serialport COM4</code>. Windows는 <code>/dev/</code> 없이 <code>COMx</code>(장치 관리자에서 번호 확인). 원본 주석의 <code>/dev/ttyACM0</code>는 맥/리눅스 표기.</li>
+</ul>
+<p><strong>③ 실행</strong></p>
+<pre><code class="language-powershell">dora destroy
+dora build dataflow_tracking_real_left.yml --uv
+dora run   dataflow_tracking_real_left.yml --uv
+</code></pre>
+<p><strong>④ 실행 전 안전</strong></p>
+<ul>
+<li>손 주변을 치운다(시작 시 손가락이 갑자기 움직일 수 있음).</li>
+<li>offset이 원본 값이라 자세가 약간 어긋날 수 있다. 하드웨어에 무리가 갈 정도로 밀면 즉시 <code>Ctrl + C</code>.</li>
+</ul>
+<h3 id="35">3.5 실물 데모 — 오른손 (참고)</h3>
+<p>원본 기본값이 오른손이다. 오른손 키트라면 원본 <code>dataflow_tracking_real.yml</code>을 거의 그대로 쓴다.</p>
+<ul>
+<li>config: <code>AHControl/config/r_hand.toml</code>(원본 제공, <code>r_finger1~4</code>).</li>
+<li><code>invert</code>: 오른손은 원본 그대로 <strong><code>false</code></strong>.</li>
+<li>id: 이 키트 기준 1~8로 맞춘다(원본 파일도 1~8).</li>
+<li>포트만 Windows <code>COMx</code>로 수정.</li>
+</ul>
+<p>왼손과의 차이는 <strong>① config 파일(l_/r_) ② finger_name(l_/r_) ③ invert(true/false) ④ dataflow의 노드·경로(l/r)</strong> 네 가지뿐이다.</p>
+<h3 id="36-ahcontrol">3.6 AHControl 도구 (모터 진단·설정)</h3>
+<p><code>Demo/AHControl</code>에서 <code>cargo run --bin=&lt;도구&gt; -- &lt;인자&gt;</code>.</p>
+<table>
+<thead>
+<tr>
+<th>도구</th>
+<th>역할</th>
+<th>예</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>goto</code></td>
+<td>단일 모터를 지정 위치로 이동</td>
+<td><code>cargo run --bin=goto -- --serialport COM4 --id 1 --pos 0.2</code></td>
+</tr>
+<tr>
+<td><code>get_zeros</code></td>
+<td>힘 풀린 상태의 영점 추출 → TOML offset 값</td>
+<td>손을 중립 자세로 잡고 실행</td>
+</tr>
+<tr>
+<td><code>set_zeros</code></td>
+<td>설정 영점 자세로 이동</td>
+<td>config 검증용</td>
+</tr>
+<tr>
+<td><code>change_id</code></td>
+<td>모터 ID 변경</td>
+<td>중복 ID 정리 시</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>baudrate 기본값 1,000,000. 포트만 맞으면 생략 가능.</li>
+<li><strong>모터 개별 진단</strong>: <code>goto</code>로 id 1~8을 하나씩 움직여 어느 모터가 응답하는지 확인. 실물 데모가 <code>divide by zero</code>로 죽으면 이걸로 원인 모터를 좁힌다(§4.7).</li>
+</ul>
+<h3 id="37">3.7 실행 흐름 요약</h3>
+<pre><code>dora build &lt;데모&gt;.yml --uv    (데모당 최초 1회)
+dora run   &lt;데모&gt;.yml --uv    (실행)
+Ctrl + C                      (종료)
+</code></pre>
+<ul>
+<li><code>dora run</code>은 임시 데몬을 자체적으로 띄우고 종료 시 정리한다. <code>dora up</code>을 따로 실행하면 데몬이 중복되어 충돌할 수 있으므로, <code>dora run</code> 단독 사용을 기본으로 한다.</li>
+</ul>
+<hr />
+<h2 id="4">4. 문제 해결</h2>
+<h3 id="41-server-disconnected-failed-to-send-register-request">4.1 노드가 <code>server disconnected</code> / <code>failed to send register request</code></h3>
+<p>증상 로그:</p>
+<pre><code>dora_daemon::node_communication: failed to receive register message
+  1: Serde Deserialization Error   (dora-message-1.0.1)
+RuntimeError: Could not initiate node from environment variable
+  2: server disconnected unexpectedly
+</code></pre>
+<ul>
+<li>원인: <strong>CLI 버전 ≠ 노드 dora-rs 버전.</strong> 노드가 보낸 등록 메시지를 데몬이 해독하지 못함.</li>
+<li>해결: CLI를 노드에 맞춘다.
+  <code>cargo uninstall dora-cli          (최신 1.0.x 제거)
+  pip install dora-rs-cli==0.3.13   (노드 요구 범위 0.3.11~0.3.13)
+  dora --version                    (0.3.x 확인)
+  dora destroy                      (이전 실패 상태 정리)</code>
+  이후 §3의 build/run 재실행.</li>
+</ul>
+<h3 id="42-uv">4.2 <code>'uv'은(는) ... 명령이 아닙니다</code></h3>
+<ul>
+<li>원인: uv 미설치, 또는 설치 후 기존 터미널이 PATH를 반영 못 함.</li>
+<li>해결: <code>pip install uv</code> 후 <strong>터미널을 새로 연다</strong>. <code>uv --version</code>으로 확인.</li>
+</ul>
+<h3 id="43-cargo-install">4.3 cargo install이 오래 걸림</h3>
+<ul>
+<li>정상. 소스 컴파일이라 5~20분 소요. <code>Compiling ...</code>이 계속 바뀌면 진행 중.</li>
+<li>회피: 가능하면 <code>pip install dora-rs-cli==&lt;버전&gt;</code>을 사용(미리 빌드, 1~2분).</li>
+</ul>
+<h3 id="44">4.4 웹캠 창이 안 보임</h3>
+<ul>
+<li><code>MediaPipe Hands</code> 창이 다른 창 뒤에 있음 → Alt+Tab / 작업표시줄로 전환.</li>
+<li>웹캠을 다른 앱(화상회의·카메라 앱)이 점유 중이면 dora가 못 씀 → 해당 앱 종료 후 재실행.</li>
+<li>카메라 권한(윈도우 설정 &gt; 개인정보 &gt; 카메라) 허용.</li>
+<li>외장 웹캠이 여러 개면 <code>cv2.VideoCapture(0)</code>의 인덱스를 조정.</li>
+</ul>
+<h3 id="45">4.5 손가락 방향이 반대(굽힘↔폄) / 자세 어긋남</h3>
+<ul>
+<li><strong>굽힘·폄이 통째로 반대</strong>: 왼손을 오른손 설정(invert=false)으로 돌린 경우. 해당 손가락 motor1·2를 <strong>둘 다 <code>invert = true</code></strong>. 왼손 전체가 반대면 8개 모두 true.</li>
+<li><strong>좌우 벌림만 반대</strong>: 그 손가락의 motor1·2 중 <strong>하나만</strong> invert. (Amazing Hand는 손가락당 모터 2개가 협조 — 굽힘=같은 방향, 벌림=반대 방향.)</li>
+<li><strong>자세가 살짝 어긋남(움직이긴 함)</strong>: offset이 다른 손 기준값이라 그렇다 → AHControl <code>get_zeros</code>로 이 손의 영점을 추출해 TOML offset에 반영.</li>
+</ul>
+<h3 id="46">4.6 손가락이 안 움직임(에러는 없음)</h3>
+<ul>
+<li>config <code>finger_name</code>이 노드가 보내는 이름과 불일치. <strong>왼손 데모엔 <code>l_finger1~4</code>, 오른손엔 <code>r_finger1~4</code></strong>. 이름이 틀리면 AHControl이 관절 데이터를 못 찾아 조용히 안 움직인다.</li>
+<li>dataflow의 <code>--config</code> 경로가 엉뚱한 파일(예: 왼손 데모인데 <code>r_hand.toml</code>)을 가리킴.</li>
+</ul>
+<h3 id="47-attempt-to-divide-by-zero-rustypot">4.7 <code>attempt to divide by zero</code> (rustypot) — 실물 데모 크래시</h3>
+<p>증상: 노드는 <code>ready</code>가 되고 dataflow 시작 직후 <code>hand_controller</code>가 패닉.</p>
+<pre><code>thread 'main' panicked at rustypot-.../dynamixel_protocol/v1.rs
+attempt to divide by zero
+</code></pre>
+<ul>
+<li>원인: AHControl이 config에 적힌 ID의 모터에게 말을 걸었으나 <strong>응답이 없음</strong>(응답 0으로 나눔). 대개 config의 ID가 실제 모터와 불일치, 또는 특정 모터의 전원·배선 문제.</li>
+<li>진단: <code>goto</code>로 id 1~8을 하나씩 움직여 어느 모터가 응답하는지 확인.
+  <code>cargo run --bin=goto -- --serialport COM4 --id 1 --pos 0.2</code></li>
+<li>전부 움직임 → 모터 정상. config의 ID 매핑·<code>finger_name</code>을 점검(§4.6).</li>
+<li>특정 id에서 멈춤/에러 → 그 모터의 ID·전원·배선 문제.</li>
+<li>확인: baudrate(기본 1,000,000)와 COM 포트가 맞는지.</li>
+</ul>
+<h3 id="48">4.8 데몬 상태가 꼬임</h3>
+<ul>
+<li><code>dora destroy</code>로 데몬·상태를 정리한 뒤 재실행.</li>
+<li><code>.dora/</code> 캐시 폴더가 이전 빌드를 담고 있으므로, 문제 지속 시 이 폴더 삭제 후 <code>dora build</code>부터.</li>
+</ul>
+<hr />
+<h2 id="5">5. 이 수업과의 관계</h2>
+<table>
+<thead>
+<tr>
+<th>원본 (dora)</th>
+<th>이 수업 (Day2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>노드 3개가 동시에 실행</td>
+<td>STEP별로 하나씩 학습</td>
+</tr>
+<tr>
+<td>AHSimulation 노드</td>
+<td><code>day2_2</code>(IK), <code>day2_5</code>(엔진)</td>
+</tr>
+<tr>
+<td>AHControl 노드 (Rust)</td>
+<td><code>day2_1</code>·<code>day2_3</code>·<code>day2_6</code> (파이썬 시리얼)</td>
+</tr>
+<tr>
+<td>dora가 노드 간 메시지 전달</td>
+<td>한 스크립트 안에서 순차 실행</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>원본은 완성된 실행 형태이지만 한 덩어리라 내부를 뜯어보기 어렵고, dora·Rust·uv 설치가 필요하다.</li>
+<li>이 수업은 같은 기능을 부품별로 분해해 파이썬만으로 하나씩 익히도록 재구성했다.</li>
+<li>수업에서 배운 STEP(추적·IK·제어)이 원본에선 dora 노드로 나뉘어 동시에 도는 것 = 로봇 미들웨어(ROS 계열)의 사고방식.</li>
+</ul>
+<hr />
+<h2 id="6">6. 준비물 · 요건 요약</h2>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>값</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>dora CLI</td>
+<td><code>dora-rs-cli</code> 0.3.13 (노드 dora-rs 0.3.11~0.3.13에 일치)</td>
+</tr>
+<tr>
+<td>파이썬</td>
+<td>3.12</td>
+</tr>
+<tr>
+<td>Rust</td>
+<td>AHControl 빌드·dora용</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>노드 가상환경·패키지</td>
+</tr>
+<tr>
+<td>웹캠</td>
+<td>tracking 계열 데모</td>
+</tr>
+<tr>
+<td>하드웨어</td>
+<td>실물 데모만 (손 + Feetech 시리얼 + COM 포트)</td>
+</tr>
+<tr>
+<td>Mediapipe</td>
+<td>PC급 연산 — PC에서 실행</td>
+</tr>
+</tbody>
+</table></div>
