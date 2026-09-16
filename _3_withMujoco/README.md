@@ -35,7 +35,7 @@
 
 ```
 pip install mujoco feetech-servo-sdk scikit-learn numpy joblib matplotlib
-pip install mink loop-rate-limiters quadprog     # STEP 2(IK) 전용
+pip install mink loop-rate-limiters daqp         # STEP 2(IK) 전용
 ```
 - Mac 3D 뷰어: `mjpython`
 - 실물: Waveshare USB 모드(점퍼 B) + CH343 드라이버
@@ -60,7 +60,7 @@ cp shape_model_보정_실물.pkl shape_model.pkl   # 교체 → day2_6 이 이�
 되돌리려면 `cp shape_model_시뮬.pkl shape_model.pkl`.
 
 > ⚠️ **보정본은 `grip_cal.json`(빈손 기준 FREECLOSE·힘 CLOSE_TARGET)과 한 세트**입니다.
-> 손을 다시 캘리브(`day2_3`에서 `k`)하면 기준이 바뀌므로 **보정본도 다시 학습**하세요.
+> `grip_cal.json`은 손 개체별 값이라 저장소에 없다 — 보정본을 쓰려면 먼저 `day2_3`에서 **`k`**로 이 손의 기준을 만든다(자동 생성). 손을 다시 캘리브하면 기준이 바뀌므로 **보정본도 다시 학습**한다.
 > 직접 만들려면: `day2_3`에서 `k` 캘리브 → `python day2_보정_shape_teach_real.py` → 도형당 5번 `c` → `t` → `s`
 
 > `_archive/` = 수업에 안 쓰는 실험용 파일 보관(무시해도 됨).
