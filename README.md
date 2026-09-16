@@ -12,14 +12,12 @@
 | 폴더 | 트랙 | 내용 | 실행 도구 |
 |---|---|---|---|
 | `_0_setup/` | 준비 | 서보 ID·중립 세팅 도구 (조립·정비 시) | 터미널 파이썬 |
-| `_1_withESP32/` | **Day 1** | ESP32 기초 → 아두이노 손 제어 → 파이썬 제어 → LLM 대화 제어 | Arduino IDE · Thonny/파이썬 |
-| `_2_tinyML/` | TinyML | XIAO 카메라로 손동작 인식 → 로봇 손 따라하기 | Arduino IDE · Edge Impulse |
-| `_3_withMujoco/` | **Day 2** | MuJoCo 시뮬 → IK → 잡기 감지 → 모양 학습 → 실물 테스트 (sim2real) | 파이썬(MuJoCo) |
+| `_1_withESP32/` | **Day 1** | ESP32 기초·아두이노·파이썬·LLM 손 제어 코드 | Arduino IDE · Thonny/파이썬 |
+| `_2_tinyML/` | TinyML | XIAO 카메라 손동작 인식 코드 | Arduino IDE · Edge Impulse |
+| `_3_withMujoco/` | **Day 2** | MuJoCo 시뮬·IK·잡기 감지·모양 인식 코드 | 파이썬(MuJoCo) |
 | `Demo_dora/` | 참고 | 원본 Amazing Hand dora-rs 데모를 이 키트(왼손)로 돌리는 설정 | dora-rs |
 
-```
-Day 1  손 움직이기 (ESP · LLM)  →  Day 2  시뮬에서 배워 실물로 (MuJoCo · sim2real)  →  모양 인식 (구·타원·정육면체)
-```
+> 이 문서는 코드 실행에 필요한 정보만 담는다. 학습 순서·목표·개념 설명은 강의자료(별도)에 있다.
 
 ---
 
@@ -84,17 +82,17 @@ python hand_setup.py          # Mac: python3
 메뉴: `3` ID 순서대로(서보 1개씩 연결) → `1` 스캔 → `4` 전체 중립 → `6` 오프셋 튜닝.
 
 ### `_1_withESP32/` — Day 1
-경로 **A**. 진행 순서대로 폴더가 나뉘어 있다.
+경로 **A**. 아두이노 펌웨어와 파이썬 제어 스크립트.
 
-| 순서 | 파일 | 역할 |
-|---|---|---|
-| 0 | `_0_ESP_Basic/Practice_1~4` | 확장보드 입출력 (네오픽셀·스위치·부저·합본) |
-| 1 | `day1_1_finger/` | 손가락 하나 제어 (서보 2개 차동) |
-| 2 | `day1_2_motion/` | 포즈·모션 라이브러리 + 시리얼 메뉴 |
-| 3 | `day1_3_command/` | **최종 펌웨어** — USB 명령(P/M/F/N) 수신. 파이썬이 이걸 제어 |
-| 4 | `day1_4_command.py` | 번호 입력 → 손 동작 |
-| 5 | `day1_5_LLM_select.py` | LLM이 정해진 동작을 **선택** |
-| 6 | `day1_6_LLM_create.py` | LLM이 각도(키프레임)를 **생성** |
+| 파일 | 하는 일 |
+|---|---|
+| `_0_ESP_Basic/Practice_1~4` | 확장보드 입출력 (네오픽셀·스위치·부저·합본) |
+| `day1_1_finger/` | 손가락 서보 제어 |
+| `day1_2_motion/` | 포즈·모션 + 시리얼 메뉴 |
+| `day1_3_command/` | 손 제어 펌웨어 — USB 명령(P/M/F/N) 수신. 파이썬이 제어 |
+| `day1_4_command.py` | 번호 입력 → 손 동작 |
+| `day1_5_LLM_select.py` | LLM 대화 → 동작 선택 (API 키 필요) |
+| `day1_6_LLM_create.py` | LLM 대화 → 각도 생성 (API 키 필요) |
 
 ```bash
 # 아두이노: 각 폴더의 .ino를 Arduino IDE로 업로드 (Board XIAO_ESP32S3, USB CDC Enabled)
@@ -107,7 +105,7 @@ python day1_6_LLM_create.py
 - 명령 프로토콜(PC → XIAO): `P<n>` 포즈 · `M<n>` 모션 · `F b0,b1,b2,b3,s0,s1,s2,s3` 자유 포즈 · `N` 중립 → 응답 `OK`/`ERR`
 - 동작 번호는 펌웨어 `doPose()/doMotion()`과 파이썬 `POSES/MOTIONS`를 **양쪽 일치**시킨다.
 - LLM 제공자 전환: `.py` 상단 `PROVIDER = "claude"` / `"gemini"`.
-- 저장소 최상위의 `prompt_example`: 바이브 코딩(LLM으로 `day1_2_motion.ino`에 모션 추가) 때 쓰는 프롬프트 예시.
+- 저장소 최상위의 `prompt_example`: LLM으로 `day1_2_motion.ino`에 모션을 추가시킬 때 쓰는 프롬프트 예시.
 
 ### `_2_tinyML/` — 카메라 손동작 인식
 경로 **A**. 카메라 XIAO 한 보드가 추론과 서보 구동을 모두 한다.
@@ -127,23 +125,23 @@ python day1_6_LLM_create.py
 **패키지 (최초 1회)**
 ```bash
 pip install mujoco feetech-servo-sdk scikit-learn numpy joblib matplotlib pyserial
-pip install mink loop-rate-limiters daqp      # STEP 2(IK) 전용
+pip install mink loop-rate-limiters daqp      # IK 스크립트(day2_2) 전용
 ```
 - IK 솔버는 설치된 것(daqp/osqp/quadprog)을 자동 선택한다. `quadprog`은 C 컴파일러가 없는 PC에서 설치가 실패하므로 `daqp`를 쓴다.
 
 **실행**
 
-| STEP | 파일 | 역할 | 실물 손 |
-|---|---|---|---|
-| 준비 | `hand_driver.py` | 서보 직결 드라이버 (연결 확인 `python hand_driver.py`) | 필요 |
-| 1 | `day2_1_sim_stream_real.py` | 시뮬 관절각 → 실물 스트리밍 | 필요 (`BACKEND="sim"`이면 시뮬만) |
-| 2 | `day2_2_sim_ik_real.py` | 빨간 점(IK 목표) 드래그 | 선택 |
-| 3 | `day2_3_grasp_sim.py` | 잡기 감지 · `k` 캘리브 | 필요 |
-| 4a | `day2_4a_shape_learn.py` | 자동 대량 학습 → `shape_model.pkl` | 불필요 |
-| 4b | `day2_4b_shape_teach.py` | 도형을 굴려·옮겨 직접 가르치기 (키보드) | 불필요 |
-| 4c | `day2_4c_shape_teach_mouse.py` | 4b와 동일, 물체 이동을 마우스로 | 불필요 |
-| 5 | `day2_5_shape_grasp_sim.py` | 학습 결과 시뮬 테스트 | 불필요 |
-| 6 | `day2_6_shape_grasp.py` | 학습 결과 실물 테스트 (sim2real) | 필요 |
+| 파일 | 하는 일 | 실물 손 |
+|---|---|---|
+| `hand_driver.py` | 서보 직결 드라이버 (연결 확인 `python hand_driver.py`) | 필요 |
+| `day2_1_sim_stream_real.py` | 시뮬 관절각 → 실물 스트리밍 | 필요 (`BACKEND="sim"`이면 시뮬만) |
+| `day2_2_sim_ik_real.py` | IK 목표(빨간 점) 드래그 | 선택 |
+| `day2_3_grasp_sim.py` | 잡기 감지 · `k` 캘리브 | 필요 |
+| `day2_4a_shape_learn.py` | 자동 대량 학습 → `shape_model.pkl` | 불필요 |
+| `day2_4b_shape_teach.py` | 도형 굴려·옮겨 가르치기 (키보드) | 불필요 |
+| `day2_4c_shape_teach_mouse.py` | 4b와 동일, 물체 이동을 마우스로 | 불필요 |
+| `day2_5_shape_grasp_sim.py` | 학습 결과 시뮬 테스트 | 불필요 |
+| `day2_6_shape_grasp.py` | 학습 결과 실물 테스트 | 필요 |
 
 ```bash
 # 3D 뷰어가 뜨는 스크립트
@@ -154,7 +152,7 @@ python   day2_4a_shape_learn.py
 ```
 - 조작 키(잡기 `G`, 회전 `A/D` 등)는 **터미널(또는 Thonny Shell) 창**에 입력한다. 3D 창은 마우스 시점용. Windows/Thonny는 키 뒤 **Enter**.
 - 3D 창 마우스: 왼쪽 드래그 회전 · 오른쪽 드래그 이동 · 휠 줌 · 더블클릭 선택 · **Ctrl+오른쪽 드래그**로 선택 물체 이동.
-- `shape_model.pkl`(시뮬 학습본)이 포함되어 있어 STEP 5·6은 학습 없이 바로 실행된다.
+- `shape_model.pkl`(학습된 분류기)이 포함되어 있어 `day2_5`·`day2_6`은 학습 없이 바로 실행된다.
 - 실물 잡기 판정 기준값은 `grip_config.py`의 `DEFAULT`. 손 개체별 빈손 기준은 `day2_3`에서 **`k`**를 누르면 `grip_cal.json`으로 자동 생성된다(저장소에 없음, 각자 생성).
 - 시리얼 포트는 자동 탐지. 여러 개 잡혀 엉뚱한 포트를 열면 `HandDriver(port="COM4")`처럼 직접 지정한다.
 - `dora_가이드.md`: 원본 dora-rs 데모의 개념·설치·실행 안내.
@@ -166,13 +164,13 @@ python   day2_4a_shape_learn.py
 
 ## 시작 전 준비
 
-- **API 키** (Day 1 STEP 5·6, `day1_5`·`day1_6`): 양식 `_1_withESP32/api_key.txt.example`을 같은 폴더에 `api_key.txt`로 복사한 뒤 키를 채운다.
+- **API 키** (`day1_5`·`day1_6`용): 양식 `_1_withESP32/api_key.txt.example`을 같은 폴더에 `api_key.txt`로 복사한 뒤 키를 채운다.
   ```bash
   cd _1_withESP32 && cp api_key.txt.example api_key.txt     # Windows: copy
   ```
   `api_key.txt`는 `.gitignore`로 저장소에 올라가지 않는다. 발급: Claude `console.anthropic.com` · Gemini `aistudio.google.com/apikey`. **키를 다른 파일이나 코드에 적지 않는다.**
 - **Edge Impulse 라이브러리** (`*_inferencing`): 미포함. 각자 학습 후 설치하고 overflow 패치(위 `_2_tinyML`).
-- **실물 도형 3종** (구·타원·정육면체, Day 2 STEP 6): `_3_withMujoco/day2_부록_shape_print_stl.py`로 STL 생성 후 3D 프린트.
+- **실물 도형 3종** (구·타원·정육면체, `day2_6`용): `_3_withMujoco/day2_부록_shape_print_stl.py`로 STL 생성 후 3D 프린트.
 
 ---
 
