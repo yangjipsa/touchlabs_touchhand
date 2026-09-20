@@ -1,47 +1,50 @@
 # Config for the left hand — 이 수업 키트(왼손)
 #  · finger_name 은 l_finger1~4 (왼손 시뮬 노드 mj_mink_left.py 가 이 이름으로 보냄)
-#  · motor id 는 이 키트의 실제 모터 ID (1~8). 매핑: f1=1·2, f2=3·4, f3=5·6, f4=7·8
-#  · invert=true : 왼손은 오른손의 거울상이라 회전 방향 반대(false면 굽힘·폄이 뒤바뀜)
-#  · offset 은 원본 값. 자세가 어긋나면 AHControl get_zeros 로 이 손의 영점을 다시 추출
+#  · motor id 는 이 키트의 실제 모터 ID (1~8).
+#    ★ 각 손가락 안에서 motor1=짝수 id, motor2=홀수 id (2·1 / 4·3 / 6·5 / 8·7).
+#      원본 왼손(2hands.toml)을 1~8로 옮길 때 처음엔 1·2/3·4/5·6/7·8 로 넣었으나,
+#      실물에서 4손가락 전부 굽힘/벌림 축이 뒤바뀌어 순서를 교체함(실물 검증).
+#      offset 은 각 물리 모터의 영점이라 id 와 함께 이동.
+#  · invert=true : 왼손은 오른손의 거울상이라 회전 방향 반대
 #  넣을 위치:  <원본 Demo>/AHControl/config/l_hand.toml
 [Fingers]
 [[motors]]
 finger_name="l_finger1"
-motor1.id = 1
-motor1.offset = 0.12217304763960307
+motor1.id = 2
+motor1.offset = 0.08726646259971647
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 2
-motor2.offset = 0.08726646259971647
+motor2.id = 1
+motor2.offset = 0.12217304763960307
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger2"
-motor1.id = 3
-motor1.offset = 0.0
+motor1.id = 4
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 4
-motor2.offset = 0.12217304763960307
+motor2.id = 3
+motor2.offset = 0.0
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger3"
-motor1.id = 5
-motor1.offset = 0.08726646259971647
+motor1.id = 6
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 6
-motor2.offset = 0.12217304763960307
+motor2.id = 5
+motor2.offset = 0.08726646259971647
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger4"
-motor1.id = 7
-motor1.offset = 0.0
+motor1.id = 8
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 8
-motor2.offset = 0.12217304763960307
+motor2.id = 7
+motor2.offset = 0.0
 motor2.invert = true
 motor2.model = "SCS0009"
