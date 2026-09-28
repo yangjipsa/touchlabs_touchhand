@@ -147,55 +147,58 @@ dora run   dataflow_angle_simu.yml --uv
 
 ### 3.4 실물 데모 — 왼손 (이 수업 키트 기준) ★
 
-이 수업 키트는 **왼손**이므로 왼손용 dataflow·config를 쓴다. 원본은 오른손 기준이라 그대로 실행하면 동작하지 않는다.
+왼손 키트는 왼손용 dataflow·config를 쓴다. 원본은 오른손 기준이라 왼손에서 그대로 실행하면 동작하지 않는다. (오른손 키트는 3.5)
 
 **① 왼손 config 만들기** — `AHControl/config/l_hand.toml` 신규 생성
 
 - `finger_name`은 **`l_finger1`~`l_finger4`** 여야 한다. 왼손 시뮬 노드(`mj_mink_left.py`)가 이 이름으로 관절 데이터를 보내고, AHControl은 config의 `finger_name`으로 그 데이터를 찾기 때문. 이름이 `r_finger`면 매핑을 못 찾아 손가락이 안 움직인다.
-- `motor1/2.id`는 **이 키트의 실제 모터 ID(1~8)**. 매핑: finger1=1·2, finger2=3·4, finger3=5·6, finger4=7·8.
+- `motor1/2.id`는 **이 키트의 실제 모터 ID(1~8)**. 각 손가락 안에서 **motor1 = 짝수 id, motor2 = 홀수 id** (finger1=2·1, finger2=4·3, finger3=6·5, finger4=8·7).
+  - 원본 순서(1·2 / 3·4 …)로 넣으면 실물에서 4손가락 모두 굽힘/벌림 축이 뒤바뀜 → 순서 교체(실물 검증).
+  - `offset`은 각 물리 모터의 영점이라 id와 함께 이동.
 - `invert`는 **8개 모두 `true`**. 왼손은 오른손의 거울상이라 회전 방향이 반대 → false로 두면 굽힘·폄이 뒤바뀐다.
+- 완성본: 소스코드 `Demo_dora/l_hand.toml`
 
 ```toml
-# Config for the left hand — 실제 모터 ID 1~8, 왼손이라 invert=true
+# Config for the left hand — 실제 모터 ID 1~8, motor1=짝수 id, 왼손이라 invert=true
 [Fingers]
 [[motors]]
 finger_name="l_finger1"
-motor1.id = 1
-motor1.offset = 0.12217304763960307
+motor1.id = 2
+motor1.offset = 0.08726646259971647
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 2
-motor2.offset = 0.08726646259971647
+motor2.id = 1
+motor2.offset = 0.12217304763960307
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger2"
-motor1.id = 3
-motor1.offset = 0.0
+motor1.id = 4
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 4
-motor2.offset = 0.12217304763960307
+motor2.id = 3
+motor2.offset = 0.0
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger3"
-motor1.id = 5
-motor1.offset = 0.08726646259971647
+motor1.id = 6
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 6
-motor2.offset = 0.12217304763960307
+motor2.id = 5
+motor2.offset = 0.08726646259971647
 motor2.invert = true
 motor2.model = "SCS0009"
 [[motors]]
 finger_name="l_finger4"
-motor1.id = 7
-motor1.offset = 0.0
+motor1.id = 8
+motor1.offset = 0.12217304763960307
 motor1.invert = true
 motor1.model = "SCS0009"
-motor2.id = 8
-motor2.offset = 0.12217304763960307
+motor2.id = 7
+motor2.offset = 0.0
 motor2.invert = true
 motor2.model = "SCS0009"
 ```
@@ -247,16 +250,28 @@ dora run   dataflow_tracking_real_left.yml --uv
 - 손 주변을 치운다(시작 시 손가락이 갑자기 움직일 수 있음).
 - offset이 원본 값이라 자세가 약간 어긋날 수 있다. 하드웨어에 무리가 갈 정도로 밀면 즉시 `Ctrl + C`.
 
-### 3.5 실물 데모 — 오른손 (참고)
+### 3.5 실물 데모 — 오른손
 
-원본 기본값이 오른손이다. 오른손 키트라면 원본 `dataflow_tracking_real.yml`을 거의 그대로 쓴다.
+오른손 키트는 소스코드 `Demo_dora/`의 오른손 파일 2개를 쓴다.
 
-- config: `AHControl/config/r_hand.toml`(원본 제공, `r_finger1~4`).
-- `invert`: 오른손은 원본 그대로 **`false`**.
-- id: 이 키트 기준 1~8로 맞춘다(원본 파일도 1~8).
-- 포트만 Windows `COMx`로 수정.
+| 파일 | 넣을 위치 |
+|---|---|
+| `r_hand.toml` | `AHControl/config/r_hand.toml` (원본 덮어씀) |
+| `dataflow_tracking_real_right.yml` | Demo 최상위 |
 
-왼손과의 차이는 **① config 파일(l_/r_) ② finger_name(l_/r_) ③ invert(true/false) ④ dataflow의 노드·경로(l/r)** 네 가지뿐이다.
+- config 값 = 원본 `r_hand.toml`과 동일: `r_finger1~4`, id 1~8(motor1 = 홀수 id), `invert = false`.
+- dataflow = 원본 `dataflow_tracking_real.yml`과 동일, 포트 인자만 왼손 파일과 같은 형식(`--serialport COM4`).
+- **실물 실측 전**. 왼손이 원본 대비 motor 순서 교체가 필요했으므로 같은 증상 여부를 확인한다.
+  - 4손가락 굽힘/벌림 축이 뒤바뀜 → 각 손가락 motor1/motor2의 `id`·`offset` 교체 (2·1 / 4·3 / 6·5 / 8·7)
+  - 굽힘·폄이 반대 → `invert = true`
+
+```powershell
+dora destroy
+dora build dataflow_tracking_real_right.yml --uv
+dora run   dataflow_tracking_real_right.yml --uv
+```
+
+왼손과의 차이는 **① config 파일(l_/r_) ② finger_name(l_/r_) ③ invert(true/false) ④ dataflow의 노드·경로(l/r)** 네 가지다. (모터 순서는 키트별 실물 확인 항목)
 
 ### 3.6 AHControl 도구 (모터 진단·설정)
 
