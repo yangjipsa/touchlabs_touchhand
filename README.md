@@ -15,7 +15,7 @@
 | `_1_withESP32/` | **Day 1** | ESP32 기초·아두이노·파이썬·LLM 손 제어 코드 | Arduino IDE · Thonny/파이썬 |
 | `_2_tinyML/` | TinyML | XIAO 카메라 손동작 인식 코드 | Arduino IDE · Edge Impulse |
 | `_3_withMujoco/` | **Day 2** | MuJoCo 시뮬·IK·잡기 감지·모양 인식 코드 | 파이썬(MuJoCo) |
-| `Demo_dora/` | 참고 | 원본 Amazing Hand dora-rs 데모를 이 키트(왼손)로 돌리는 설정 | dora-rs |
+| `Demo_dora/` | 참고 | 원본 Amazing Hand dora-rs 데모를 이 키트(왼손·오른손)로 돌리는 설정 | dora-rs |
 
 > 이 문서는 코드 실행에 필요한 정보만 담는다. 학습 순서·목표·개념 설명은 강의자료(별도)에 있다.
 
@@ -38,7 +38,12 @@
 | **B** | 컴퓨터 → USB → Waveshare → 서보 (**ESP 없음**) | **B (USB 직결)** | `cu.wchusbserial…` / `COMx` | 서보 세팅 · Day 2 |
 
 - 손가락 ↔ 서보 ID: **검지 1·2 / 중지약지 3·4 / 새끼 5·6 / 엄지 7·8**
-- 이 키트는 **왼손** 기준. 아두이노 코드 상단 `#define HAND_LEFT`(기본) / `HAND_RIGHT`로 전환.
+- 기본값은 **왼손**. 오른손은 한 줄로 전환:
+  - 아두이노(Day 1 · TinyML): 코드 상단 `#define HAND_LEFT` → `#define HAND_RIGHT`
+  - Day 2(MuJoCo): `_3_withMujoco/hand_side.py` 의 `HAND = "L"` → `"R"`
+  - 서보 세팅 `gestures.py`: 상단 `HAND = "L"` → `"R"`
+  - dora: `Demo_dora/` 의 오른손 파일(`r_hand.toml`, `dataflow_tracking_real_right.yml`)
+  - 오른손 좌우(벌림) 방향은 **실측 전**(거울상 가정). 브이(V)에서 검지·중지가 오므라들면 `SDIR` 부호를 반대로.
 - ESP ↔ Waveshare 배선(경로 A): `D6(TX)→RX`, `D7(RX)→TX`, `GND→GND`.
 - 한 포트에는 한 프로그램만. 파이썬 실행 전 아두이노 시리얼 모니터를 닫는다.
 
@@ -158,7 +163,7 @@ python   day2_4a_shape_learn.py
 - `dora_가이드.md`: 원본 dora-rs 데모의 개념·설치·실행 안내.
 
 ### `Demo_dora/` — 원본 dora-rs 데모 (참고)
-원본 Amazing Hand `Demo/`(dora-rs 기반)를 이 키트(왼손, 모터 ID 1~8)로 돌리기 위한 파일 2개(`l_hand.toml`, `dataflow_tracking_real_left.yml`)와 넣을 위치 안내. 원본 Demo 폴더 자체는 Pollen Robotics 저장소에서 받는다. 상세는 폴더 `README.md`와 `_3_withMujoco/dora_가이드.md`.
+원본 Amazing Hand `Demo/`(dora-rs 기반)를 이 키트(모터 ID 1~8)로 돌리기 위한 파일. 왼손 2개(`l_hand.toml`, `dataflow_tracking_real_left.yml`), 오른손 2개(`r_hand.toml`, `dataflow_tracking_real_right.yml`)와 넣을 위치 안내. 원본 Demo 폴더 자체는 Pollen Robotics 저장소에서 받는다. 상세는 폴더 `README.md`와 `_3_withMujoco/dora_가이드.md`.
 
 ---
 

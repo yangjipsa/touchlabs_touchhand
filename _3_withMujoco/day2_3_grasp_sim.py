@@ -42,9 +42,9 @@ MARGIN       = _cfg["MARGIN"]        # 빈손 기준보다 이만큼 덜 닫히�
 FREECLOSE    = list(_cfg["FREECLOSE"]) if _cfg["FREECLOSE"] else [None, None, None, None]
 
 # ── 시뮬 ──
-HAND = "AH_Left"
+from hand_side import MODEL_DIR     # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 HERE = Path(__file__).resolve().parent
-MODEL = HERE / "AHSimulation" / HAND / "mjcf" / "scene.xml"
+MODEL = HERE / "AHSimulation" / MODEL_DIR / "mjcf" / "scene.xml"
 model = mujoco.MjModel.from_xml_path(str(MODEL))
 data  = mujoco.MjData(model)
 SIM = {"thumb": 3, "index": 0, "mid": 1, "pinky": 2}   # 시뮬 finger 매핑

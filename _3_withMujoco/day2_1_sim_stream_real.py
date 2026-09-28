@@ -34,9 +34,9 @@ SPEED_STEP = 0.04       # 시뮬 움직임 속도
 STREAM_HZ  = 12         # 실물로 보내는 빈도(초당)
 
 # ── 시뮬 ── (→ MuJoCo_자료 3절: 모델 vs 상태)
-HAND = "AH_Left"
+from hand_side import MODEL_DIR     # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 HERE = Path(__file__).resolve().parent
-MODEL = HERE / "AHSimulation" / HAND / "mjcf" / "scene.xml"
+MODEL = HERE / "AHSimulation" / MODEL_DIR / "mjcf" / "scene.xml"
 model = mujoco.MjModel.from_xml_path(str(MODEL))   # 설계도 로드(고정, 안 변함) → 3절
 data  = mujoco.MjData(model)                        # 상태 그릇(qpos·qvel·ctrl, 매 스텝 변함) → 3절
 

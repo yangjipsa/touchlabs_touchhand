@@ -23,11 +23,12 @@
 | `day2_보정_check_real.py` | 실물 손가락 깊이 진단 |
 | `shape_common.py` | 도형·특징 추출(sim·실물 공유) |
 | `grip_config.py` | 실물 잡기 설정 공유(STEP3↔6) → `grip_cal.json` |
+| `hand_side.py` | **왼손/오른손 선택** — `HAND = "L"`/`"R"` 한 줄로 모델·물체 위치·실물 방향 전체 전환 |
 | `day2_부록_shape_print_stl.py` | 테스트 도형 STL 생성(85mm) |
 
 ## 데이터·자산 (같이 배포)
 
-- `AHSimulation/` — MuJoCo 손 모델(`AH_Left/mjcf/scene.xml` 등)
+- `AHSimulation/` — MuJoCo 손 모델(`AH_Left/`, `AH_Right/` 의 `mjcf/scene.xml`)
 - `objmesh/`, `stl/` — 물체 메시 / 생성된 도형 STL
 - `shape_model.pkl` — 학습된 분류기(있으면 바로 STEP 5·6 가능)
 

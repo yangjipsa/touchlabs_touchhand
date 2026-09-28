@@ -21,6 +21,7 @@ from pathlib import Path
 import numpy as np
 import joblib
 from shape_common import SHAPES, EMOJI, N_GRASP, FEAT_VERSION, extract_features, Pacer, frame_camera
+from hand_side import MODEL_DIR, MIRROR_Y     # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 
 HERE = Path(__file__).resolve().parent
 OBJDIR = HERE / "objmesh"
@@ -43,7 +44,7 @@ CAP_R = 0.013
 DISTB = ['parallel_pin_2_x_16__da4b7ddbe9d803fe3fbc70f2e822b99b'+s for s in ['', '_2', '_3', '_4']]
 CAP2_FROMTO = [-0.004, -0.010, 0.005, -0.042, -0.010, 0.005]
 CAP2_R = 0.012
-GRASP_POS = np.array([0.032, 0.014, 0.10])     # 손바닥에 붙인 위치(실제 잡는 방식)
+GRASP_POS = np.array([0.032, 0.014 * MIRROR_Y, 0.10])  # 손바닥에 붙인 위치(실제 잡는 방식). 오른손은 y 반대
 AWAY_POS  = np.array([0.05, 0.014, -1.0])
 POS_JITTER = np.array([0.004, 0.008, 0.005])   # 랜덤범위 (x앞뒤 작게=손바닥밀착, y좌우 위주, z상하)
 def jitter_pos(rng):
@@ -70,7 +71,7 @@ def _add_object(spec, mujoco, shape):
 def build_model():
     """3개 도형을 한 모델에(활성만 잡는 자리, 나머지는 멀리). 각 물체 = 정적 body(3축 회전은 quat)."""
     import mujoco
-    spec = mujoco.MjSpec.from_file(str(HERE/"AHSimulation"/"AH_Left"/"mjcf"/"scene.xml"))
+    spec = mujoco.MjSpec.from_file(str(HERE/"AHSimulation"/MODEL_DIR/"mjcf"/"scene.xml"))
     for bn in TIPB:                                         # 손끝 충돌 캡슐(투명, 패드 덮음)
         b = spec.body(bn); g = b.add_geom(); g.type = mujoco.mjtGeom.mjGEOM_CAPSULE
         g.fromto = CAP_FROMTO; g.size[0] = CAP_R

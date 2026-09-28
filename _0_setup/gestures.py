@@ -2,12 +2,17 @@
 Amazing Hand 제스처 모음 (메뉴에서 골라 실행). 서보별 중립보정(offsets.py) 반영.
 사용: (GUI 닫고) venv 활성화 후  python gestures.py
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time, random
 from offsets import mid, clamp
 
 from portfinder import find_port
 PORT  = find_port()
+
+# ★ 왼손 "L" / 오른손 "R" — 이 한 줄만 바꾼다
+HAND = "L"
+SDIR = +1 if HAND == "L" else -1   # 좌우(벌림) 방향. 오른손 -1 은 실측 전(거울상 가정)
+                                   #   확인: 브이(V)에서 검지·중지가 붙으면 부호 반대로
 SPEED = 600          # 값 높을수록 빠름 (최대 ~1000)
 FLEX  = 300          # 굽힘(주먹)
 EXT   = 80           # 폄(펴기)
@@ -32,6 +37,7 @@ def w(i, p):
 
 def finger(idx, flex, sway=0):        # idx 0~3, +flex=굽힘
     _, a, b = FINGERS[idx]
+    sway *= SDIR
     w(a, mid(a) - flex + sway)
     w(b, mid(b) + flex + sway)
 

@@ -169,7 +169,8 @@ def session():
 def run_with_viewer():
     import mujoco, mujoco.viewer
     HERE = Path(__file__).resolve().parent
-    model = mujoco.MjModel.from_xml_path(str(HERE/"AHSimulation"/"AH_Left"/"mjcf"/"scene.xml"))  # 설계도 → 3절
+    from hand_side import MODEL_DIR   # 왼손/오른손 = hand_side.py 의 HAND 한 줄
+    model = mujoco.MjModel.from_xml_path(str(HERE/"AHSimulation"/MODEL_DIR/"mjcf"/"scene.xml"))  # 설계도 → 3절
     data = mujoco.MjData(model)                                                                   # 상태 → 3절
     SIM = {"thumb": 3, "index": 0, "mid": 1, "pinky": 2}
     def pose_to_ctrl(flex4):

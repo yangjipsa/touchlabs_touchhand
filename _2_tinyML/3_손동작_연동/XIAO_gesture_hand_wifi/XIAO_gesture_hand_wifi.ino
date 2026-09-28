@@ -44,8 +44,15 @@ void scsWrite(uint8_t id, uint8_t addr, const uint8_t *data, uint8_t n) {
 }
 void scsWriteByte(uint8_t id, uint8_t addr, uint8_t v){ scsWrite(id,addr,&v,1); }
 void scsWritePos(uint8_t id,int pos,uint16_t t,uint16_t s){ uint8_t p[6]={(uint8_t)((pos>>8)&0xFF),(uint8_t)(pos&0xFF),(uint8_t)((t>>8)&0xFF),(uint8_t)(t&0xFF),(uint8_t)((s>>8)&0xFF),(uint8_t)(s&0xFF)}; scsWrite(id,42,p,6); }
+// ── 손 방향: 아래 한 줄만 선택 (오른손 SDIR -1 은 거울상 가정·실측 전, 브이가 오므라들면 부호 반대로) ──
+//#define HAND_RIGHT
 #define HAND_LEFT
-const int SDIR=+1, BDIR=+1;
+#ifdef HAND_LEFT
+const int SDIR=+1;
+#else
+const int SDIR=-1;
+#endif
+const int BDIR=+1;
 const uint8_t SA[4]={7,1,3,5}, SB[4]={8,2,4,6};
 #define THUMB 0
 #define INDEX 1

@@ -50,11 +50,10 @@ print(f"⚙  IK QP 솔버: {QP_SOLVER}")
 
 BACKEND   = "both"      # "both"(시뮬+실물) / "sim"(시뮬만)
 STREAM_HZ = 12
-SWAY_DIR  = +1          # 좌우가 실물에서 반대로 움직이면 -1 로
+from hand_side import MODEL_DIR, SWAY_DIR   # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 
-HAND = "AH_Left"
 HERE = Path(__file__).resolve().parent
-MODEL = HERE / "AHSimulation" / HAND / "mjcf" / "scene.xml"
+MODEL = HERE / "AHSimulation" / MODEL_DIR / "mjcf" / "scene.xml"
 model = mujoco.MjModel.from_xml_path(str(MODEL))   # 설계도(mjModel) 로드 → 3절
 
 # ── mink IK 세팅 ── (IK = 손끝 목표 → 관절각 역산)

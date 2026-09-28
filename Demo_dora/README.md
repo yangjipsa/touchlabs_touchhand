@@ -1,17 +1,19 @@
-# Demo_dora — 원본 dora 데모용 왼손 파일
+# Demo_dora — 원본 dora 데모용 왼손·오른손 파일
 
-이 폴더는 **원본 AmazingHand `Demo/`(dora-rs 기반)를 이 수업 키트(왼손)로 돌리기 위한 추가 파일**만 담는다. 원본 Demo 폴더 자체는 여기 없다 — 아래 절차대로 원본을 받아 이 두 파일을 넣는다.
+이 폴더는 **원본 AmazingHand `Demo/`(dora-rs 기반)를 이 수업 키트로 돌리기 위한 추가 파일**만 담는다. 원본 Demo 폴더 자체는 여기 없다 — 아래 절차대로 원본을 받아 자기 손에 맞는 두 파일을 넣는다.
 
-전체 개념·설치·트러블슈팅은 **강의자료 `dora_가이드`** 참고.
+전체 개념·설치·트러블슈팅은 **강의자료 `dora_가이드`** 참고. 아래 절차는 왼손 기준이며, 오른손은 파일 이름의 `l`/`left`를 `r`/`right`로 바꿔 읽는다.
 
 ---
 
-## 들어있는 파일 2개
+## 들어있는 파일 4개
 
-| 파일 | 원본 Demo 안 넣을 위치 |
-|---|---|
-| `l_hand.toml` | `Demo/AHControl/config/l_hand.toml` |
-| `dataflow_tracking_real_left.yml` | `Demo/dataflow_tracking_real_left.yml` (Demo 최상위) |
+| 손 | 파일 | 원본 Demo 안 넣을 위치 |
+|---|---|---|
+| 왼손 | `l_hand.toml` | `Demo/AHControl/config/l_hand.toml` |
+| 왼손 | `dataflow_tracking_real_left.yml` | `Demo/dataflow_tracking_real_left.yml` (Demo 최상위) |
+| 오른손 | `r_hand.toml` | `Demo/AHControl/config/r_hand.toml` (원본 덮어씀) |
+| 오른손 | `dataflow_tracking_real_right.yml` | `Demo/dataflow_tracking_real_right.yml` (Demo 최상위) |
 
 ---
 
@@ -62,7 +64,11 @@ id 1~8 을 바꿔가며 어느 모터가 응답하는지 확인. 자세한 증�
 ---
 
 ## 오른손 키트라면
-이 폴더 대신 원본 기본 파일을 쓴다. `dataflow_tracking_real.yml` + `AHControl/config/r_hand.toml`, `invert=false`. 왼/오 차이는 ① config 파일 ② finger_name(l_/r_) ③ invert(true/false) ④ dataflow 노드·경로(l/r) 네 가지.
+`r_hand.toml` + `dataflow_tracking_real_right.yml` 을 쓴다. 값은 원본 오른손 설정과 같다(ID 1~8, `invert=false`). 왼/오 차이는 ① config 파일 ② finger_name(l_/r_) ③ invert(true/false) ④ dataflow 노드·경로(l/r) 네 가지.
+
+★ 오른손 설정은 **실물 실측 전**이다. 왼손은 원본 대비 각 손가락 motor1/motor2 순서를 바꿔야 했으므로(실물 검증), 오른손도 같은 증상이면 같은 방법으로 고친다.
+- 4손가락 굽힘/벌림 축이 뒤바뀜 → `r_hand.toml` 각 손가락의 motor1/motor2 `id`·`offset` 을 서로 교체 (2·1 / 4·3 / 6·5 / 8·7)
+- 굽힘·폄이 반대 → `invert` 를 `true` 로
 
 ---
 

@@ -40,8 +40,7 @@ SPEED = 600
 # 손가락 순서 0엄지 1검지 2중지약지 3새끼  →  (a,b) 서보 ID  (실측 매핑)
 SA = [7, 1, 3, 5]
 SB = [8, 2, 4, 6]
-SDIR = +1        # 왼손. 오른손이면 -1
-BDIR = +1
+from hand_side import SDIR, BDIR   # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 
 FLEX, EXT, SWAY, SPREAD = 300, 80, 110, 65
 THUMB_FLEX, THUMB_TUCK = 180, 120

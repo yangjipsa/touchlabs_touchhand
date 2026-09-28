@@ -87,7 +87,7 @@ def banner():
 def build_model_with_handle():
     """day2_5.build_model() 을 복제하되, 마우스 드래그용 mocap 핸들 body 를 추가.
     (기존 파일 불변 — day2_5 의 상수/함수는 읽기만 재사용). 물체는 그대로 정적 body."""
-    spec = mujoco.MjSpec.from_file(str(G.HERE/"AHSimulation"/"AH_Left"/"mjcf"/"scene.xml"))
+    spec = mujoco.MjSpec.from_file(str(G.HERE/"AHSimulation"/G.MODEL_DIR/"mjcf"/"scene.xml"))
     for bn in G.TIPB:                                       # 손끝 충돌 캡슐(투명)
         b = spec.body(bn); g = b.add_geom(); g.type = mujoco.mjtGeom.mjGEOM_CAPSULE
         g.fromto = G.CAP_FROMTO; g.size[0] = G.CAP_R
