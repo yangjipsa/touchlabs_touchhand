@@ -69,10 +69,11 @@ void scsWritePos(uint8_t id, int pos, uint16_t moveTime, uint16_t speed) {
 #define HAND_LEFT
 #ifdef HAND_LEFT
   const int SDIR = +1;                                 // 왼손 (실측 확인)
+  const int BDIR = +1;                                 // 왼손 굽힘 (실측 확인)
 #else
   const int SDIR = -1;                                 // 오른손 (거울상 가정, 실측 전). 브이가 오므라들면 부호 반대로
+  const int BDIR = -1;                                 // 오른손 굽힘 (실측 확인)
 #endif
-const int BDIR = +1;                                   // 굽힘 방향 (양손 동일)
 const uint8_t SA[4] = { 7, 1, 3, 5 };                  // [엄지,검지,중지약지,새끼] a쪽
 const uint8_t SB[4] = { 8, 2, 4, 6 };                  //                          b쪽
 #define THUMB 0

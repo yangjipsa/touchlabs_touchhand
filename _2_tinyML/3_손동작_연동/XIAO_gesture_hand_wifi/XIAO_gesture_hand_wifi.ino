@@ -48,11 +48,10 @@ void scsWritePos(uint8_t id,int pos,uint16_t t,uint16_t s){ uint8_t p[6]={(uint8
 //#define HAND_RIGHT
 #define HAND_LEFT
 #ifdef HAND_LEFT
-const int SDIR=+1;
+const int SDIR=+1, BDIR=+1;
 #else
-const int SDIR=-1;
+const int SDIR=-1, BDIR=-1;   // 굽힘 BDIR 은 실측 확인
 #endif
-const int BDIR=+1;
 const uint8_t SA[4]={7,1,3,5}, SB[4]={8,2,4,6};
 #define THUMB 0
 #define INDEX 1

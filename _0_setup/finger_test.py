@@ -9,6 +9,7 @@ import time
 from offsets import mid, clamp
 
 from portfinder import find_port
+from hand_side import BDIR         # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 PORT  = find_port()
 SPEED = 600     # 값 높을수록 빠름 (최대 ~1000)
 FLEX  = 300     # 굽힘(주먹) 진폭
@@ -30,6 +31,7 @@ def w(i, p):
     sc.WritePos(i, clamp(i, p), 0, SPEED)   # ±90° 안전 클램프
 
 def set_finger(a, b, amp):        # +amp = 굽힘, 서보별 중립 기준
+    amp *= BDIR
     w(a, mid(a) - amp)
     w(b, mid(b) + amp)
 

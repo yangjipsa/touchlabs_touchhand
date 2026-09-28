@@ -73,10 +73,11 @@ void scsWritePos(uint8_t id, int pos, uint16_t moveTime, uint16_t speed) {
 #define HAND_LEFT
 #ifdef HAND_LEFT
   const int SDIR = +1;            // 왼손 (실측 확인). 브이가 오므라들면 부호 반대로
+  const int BDIR = +1;            // 왼손 굽힘 (실측 확인)
 #else
   const int SDIR = -1;            // 오른손 (거울상 가정, 실측 전). 브이가 오므라들면 부호 반대로
+  const int BDIR = -1;            // 오른손 굽힘 (실측 확인)
 #endif
-const int BDIR = +1;              // 굽힘 방향 (양손 동일)
 
 // ───────── 손가락 = 서보쌍 매핑 (물리 배선에 맞게 조정) ─────────
 //  손가락 순서:  0=엄지  1=검지  2=중지약지  3=새끼

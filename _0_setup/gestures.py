@@ -8,11 +8,7 @@ from offsets import mid, clamp
 
 from portfinder import find_port
 PORT  = find_port()
-
-# ★ 왼손 "L" / 오른손 "R" — 이 한 줄만 바꾼다
-HAND = "L"
-SDIR = +1 if HAND == "L" else -1   # 좌우(벌림) 방향. 오른손 -1 은 실측 전(거울상 가정)
-                                   #   확인: 브이(V)에서 검지·중지가 붙으면 부호 반대로
+from hand_side import SDIR, BDIR   # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 SPEED = 600          # 값 높을수록 빠름 (최대 ~1000)
 FLEX  = 300          # 굽힘(주먹)
 EXT   = 80           # 폄(펴기)
@@ -37,7 +33,7 @@ def w(i, p):
 
 def finger(idx, flex, sway=0):        # idx 0~3, +flex=굽힘
     _, a, b = FINGERS[idx]
-    sway *= SDIR
+    flex *= BDIR; sway *= SDIR
     w(a, mid(a) - flex + sway)
     w(b, mid(b) + flex + sway)
 

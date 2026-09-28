@@ -23,7 +23,7 @@
  *     m <n>   모션 실행 (1~)      예) m1  = 노노  (STEP3에서 m2~6 추가)
  *     N       중립
  *     ?       목록
- *  Hand     : 왼손/오른손은 SDIR 상수로. 굽힘은 양손 동일.
+ *  Hand     : 왼손/오른손은 HAND_LEFT / HAND_RIGHT 한 줄로 선택 (SDIR·BDIR 자동).
  *  Note     : 외부 라이브러리 불필요 — SCS(scscl) 패킷을 직접 생성.
  *             ③ 명령(최종본)은 이 라이브러리를 그대로 쓰고
  *             입력만 P/M/F/N(기계용)으로 바꾼다.
@@ -71,10 +71,11 @@ void scsWritePos(uint8_t id, int pos, uint16_t moveTime, uint16_t speed) {
 #define HAND_LEFT
 #ifdef HAND_LEFT
   const int SDIR = +1;            // 왼손 (실측 확인)
+  const int BDIR = +1;            // 왼손 굽힘 (실측 확인)
 #else
   const int SDIR = -1;            // 오른손 (거울상 가정, 실측 전). 브이가 오므라들면 부호 반대로
+  const int BDIR = -1;            // 오른손 굽힘 (실측 확인)
 #endif
-const int BDIR = +1;              // 굽힘 방향 (양손 동일)
 
 // ───────── 손가락 = 서보쌍 매핑 (물리 배선) ─────────
 //  손가락 순서:  0=엄지  1=검지  2=중지약지  3=새끼

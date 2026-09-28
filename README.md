@@ -41,9 +41,9 @@
 - 기본값은 **왼손**. 오른손은 한 줄로 전환:
   - 아두이노(Day 1 · TinyML): 코드 상단 `#define HAND_LEFT` → `#define HAND_RIGHT`
   - Day 2(MuJoCo): `_3_withMujoco/hand_side.py` 의 `HAND = "L"` → `"R"`
-  - 서보 세팅 `gestures.py`: 상단 `HAND = "L"` → `"R"`
+  - 서보 세팅(`gestures.py`·`hand_wave.py`·`finger_test.py`): `_0_setup/hand_side.py` 의 `HAND = "L"` → `"R"`
   - dora: `Demo_dora/` 의 오른손 파일(`r_hand.toml`, `dataflow_tracking_real_right.yml`)
-  - 오른손 좌우(벌림) 방향은 **실측 전**(거울상 가정). 브이(V)에서 검지·중지가 오므라들면 `SDIR` 부호를 반대로.
+  - 오른손은 굽힘(`BDIR`)·좌우(`SDIR`) 방향이 자동 반전. 굽힘은 실물 확인, 좌우(벌림)는 **실측 전**(거울상 가정) — 브이(V)에서 검지·중지가 오므라들면 `SDIR` 부호를 반대로.
 - ESP ↔ Waveshare 배선(경로 A): `D6(TX)→RX`, `D7(RX)→TX`, `GND→GND`.
 - 한 포트에는 한 프로그램만. 파이썬 실행 전 아두이노 시리얼 모니터를 닫는다.
 

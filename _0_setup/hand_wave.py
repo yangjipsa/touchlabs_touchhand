@@ -11,6 +11,7 @@ import time
 from offsets import mid, clamp
 
 from portfinder import find_port
+from hand_side import SDIR, BDIR   # 왼손/오른손 = hand_side.py 의 HAND 한 줄
 PORT  = find_port()
 SPEED = 600          # 값 높을수록 빠름 (최대 ~1000)
 OPEN  = 80           # 손 펴는 정도
@@ -35,6 +36,7 @@ def w(i, p):
 THUMB_IDX = 3        # 엄지쪽 손가락 (FINGERS 인덱스)
 
 def hand(flex, sway):
+    flex *= BDIR; sway *= SDIR
     for idx, (_, a, b) in enumerate(FINGERS):
         s = -sway if idx == THUMB_IDX else sway   # 엄지쪽만 반대 방향으로 흔들기
         w(a, mid(a) - flex + s)

@@ -79,7 +79,19 @@ int  midv(int id)          { return constrain(MID + OFFSET[id], 0, 1023); }
 int  clampv(int id, int p) { int m = midv(id); return constrain(constrain(p, m - LIMIT, m + LIMIT), 0, 1023); }
 void w(int id, int p)      { scsWritePos(id, clampv(id, p), 0, SPEED); }
 
+// ───────── 손 방향 (왼손/오른손) — 아래 한 줄만 선택 ─────────
+//#define HAND_RIGHT
+#define HAND_LEFT
+#ifdef HAND_LEFT
+  const int SDIR = +1;            // 왼손 (실측 확인)
+  const int BDIR = +1;            // 왼손 굽힘 (실측 확인)
+#else
+  const int SDIR = -1;            // 오른손 (거울상 가정, 실측 전). 브이가 오므라들면 부호 반대로
+  const int BDIR = -1;            // 오른손 굽힘 (실측 확인)
+#endif
+
 void finger(int idx, int flex, int sway = 0) {
+  flex *= BDIR; sway *= SDIR;
   w(SA[idx], midv(SA[idx]) - flex + sway);
   w(SB[idx], midv(SB[idx]) + flex + sway);
 }
