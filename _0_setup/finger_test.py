@@ -4,7 +4,7 @@ Amazing Hand 손가락 테스트 + 주먹/펴기 데모 (서보별 중립보정 
 중립은 offsets.py 의 mid(i) 사용.
 사용: (GUI 닫고) venv 활성화 후  python finger_test.py   (Ctrl+C 중단→중립복귀)
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time
 from offsets import mid, clamp
 

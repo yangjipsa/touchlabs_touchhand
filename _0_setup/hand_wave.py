@@ -6,7 +6,7 @@ Amazing Hand 손 흔들기(waving) — 손을 편 다음 좌우로 살랑살랑 
   (flex>0 = 굽힘, flex<0 = 폄, sway = 좌우)
 사용: (GUI 닫고) venv 활성화 후  python hand_wave.py   (Ctrl+C 중단→중립)
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time
 from offsets import mid, clamp
 

@@ -4,7 +4,7 @@ SCS0009 영점 정렬 도우미 — 서보를 중립(512)으로 보내고 유지
 사용: (GUI 닫고) venv 활성화 후  python servo_middle.py
 Ctrl+C 로 종료.
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time
 
 PORT = "/dev/cu.wchusbserial5B790178891"

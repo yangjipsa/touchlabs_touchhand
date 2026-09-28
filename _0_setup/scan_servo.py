@@ -2,7 +2,7 @@
 Feetech 서보 스캔 — SC(scscl) + ST(sms_sts) 프로토콜 + 여러 baud 자동 시도
 사용: (GUI/Thonny 다 닫고) venv 활성화 후  python scan_servo.py
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 
 PORT = "/dev/cu.wchusbserial5B790178891"   # VCP 드라이버 설치 후 새 포트
 BAUDS = [1000000, 500000, 250000, 115200, 57600, 128000]

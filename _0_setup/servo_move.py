@@ -2,7 +2,7 @@
 SCS0009 이동 테스트 — 서보를 안전 범위(450~570)로 천천히 움직여봄
 사용: (Servo Tool GUI 닫고) venv 활성화 후  python servo_move.py
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time
 
 from portfinder import find_port

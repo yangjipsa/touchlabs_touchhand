@@ -5,7 +5,7 @@ SCS0009 ID 변경 — 연결된 서보 1개를 지정 ID로 변경.
 ※ 반드시 서보를 1개만 연결하고 실행 (여러 개면 충돌)
 """
 import sys, time
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 
 from portfinder import find_port
 PORT = find_port()   # 자동탐지 (실패 시 "/dev/cu.wchusbserial..." 직접 지정)

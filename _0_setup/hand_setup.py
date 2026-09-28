@@ -9,7 +9,7 @@
 #
 #  손가락↔서보 (실측): 검지=1,2 / 중지약지=3,4 / 새끼=5,6 / 엄지=7,8
 # ============================================================
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 from serial.tools import list_ports
 import sys, time
 

@@ -3,7 +3,7 @@
 서보별 보정은 offsets.py 에서 관리 (거기만 수정).
 사용: (GUI 닫고) venv 활성화 후  python servo_all_middle.py   (Ctrl+C 종료)
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 import time
 from offsets import mid, OFFSET
 

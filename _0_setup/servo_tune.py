@@ -3,7 +3,7 @@
 톱니(스플라인) 때문에 혼이 정확히 안 맞을 때, 소프트웨어로 중립값을 보정.
 사용: (GUI 닫고) venv 활성화 후  python servo_tune.py
 """
-from scservo_sdk import *
+from scscl_compat import *   # scservo_sdk + scscl (SDK 버전 무관)
 
 PORT = "/dev/cu.wchusbserial5B790178891"
 
